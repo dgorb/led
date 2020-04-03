@@ -18,6 +18,7 @@ class LEDStrip:
 
     # min/max: e.g. Tuple(255, 255, 255)
     def shift(self, min, max, duration, cont=False):
+        print(f"Shifting between {min} and {max}, period={duration}s")
         min_r = min[0]
         max_r = max[0]
         min_g = min[1]
@@ -32,13 +33,20 @@ class LEDStrip:
 
         self.ctr.start_all()
 
-    def _print_colors(self):
+    def _print_colors(self, verbose=False):
         # FIXME: mess
         while not (
             self.ctr.get_thread('r').stopped() and
             self.ctr.get_thread('g').stopped() and
             self.ctr.get_thread('b').stopped()):
-            print(Colr().rgb(self.r.intensity, self.g.intensity, self.b.intensity, f"R: {self.r.intensity} G: {self.g.intensity} B: {self.b.intensity}"), end="\r", flush=True)
+
+            log_str = '#'
+            end_str = ''
+            if verbose:
+                log_str = f"R: {self.r.intensity} G: {self.g.intensity} B: {self.b.intensity}"
+                end_str = '\r'
+
+            print(Colr().rgb(self.r.intensity, self.g.intensity, self.b.intensity, log_str), end=end_str, flush=True)
         self.ctr.get_thread('log').stop()
 
 class Pin:
@@ -77,21 +85,25 @@ class Pin:
             end = temp_start
 
         while True:
-            if start > end:
-                temp_start = start
-                start = end
-                end = temp_start
+            if self.ctr.get_thread(self.color).stopped():
+                break
+
             if self.intensity <= end and incresing:
                 self.intensity += self.SHIFT_STEP
                 if self.intensity == end:
                     incresing = False
-                    if not cont or self.ctr.get_thread(self.color).stopped():
+                    if not cont:
+                        self.ctr.stop(self.color)
                         break
+
             elif self.intensity >= start and not incresing:
                 self.intensity -= self.SHIFT_STEP
                 if self.intensity == start:
                     incresing = True
-                    if not cont or self.ctr.get_thread(self.color).stopped():
+                    if not cont:
+                        self.ctr.stop(self.color)
                         break
 
             time.sleep(delay)
+
+        print("shifting done")

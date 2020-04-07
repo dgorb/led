@@ -4,13 +4,17 @@ import pigpio
 from colr import Colr
 from controller import Controller
 
+RED_PIN = 17
+GREEN_PIN = 22
+BLUE_PIN = 24
+
 class LEDStrip:
     def __init__(self, r, g, b):
         self.ctr = Controller()
         self.pi = pigpio.pi()
-        self.r = Pin(self.pi, 17, self.ctr, 'r', r)
-        self.g = Pin(self.pi, 22, self.ctr, 'g', g)
-        self.b = Pin(self.pi, 24, self.ctr, 'b', b)
+        self.r = Pin(self.pi, RED_PIN, self.ctr, 'r', r)
+        self.g = Pin(self.pi, GREEN_PIN, self.ctr, 'g', g)
+        self.b = Pin(self.pi, BLUE_PIN, self.ctr, 'b', b)
         self.set_color(r, g, b)
 
     def set_color(self, r, g, b):

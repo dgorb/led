@@ -1,20 +1,27 @@
 import time
 import threading
-
+import pigpio
 from colr import Colr
 from controller import Controller
 
 class LEDStrip:
     def __init__(self, r, g, b):
         self.ctr = Controller()
-        self.r = Pin(self.ctr, 'r', r)
-        self.g = Pin(self.ctr, 'g', g)
-        self.b = Pin(self.ctr, 'b', b)
+        self.pi = pigpio.pi()
+        self.r = Pin(self.pi, 17, self.ctr, 'r', r)
+        self.g = Pin(self.pi, 22, self.ctr, 'g', g)
+        self.b = Pin(self.pi, 24, self.ctr, 'b', b)
+        self.set_color(r, g, b)
 
     def set_color(self, r, g, b):
         self.r.set_intensity(r)
         self.g.set_intensity(g)
         self.b.set_intensity(b)
+
+    def off(self):
+        self.set_color(0, 0, 0)
+        self.ctr.stop_all()
+        self.pi.stop()
 
     # min/max: e.g. Tuple(255, 255, 255)
     def shift(self, min, max, duration, cont=False):
@@ -29,7 +36,7 @@ class LEDStrip:
         self.ctr.add('r', self.r.shift, min_r, max_r, duration, cont)
         self.ctr.add('g', self.g.shift, min_g, max_g, duration, cont)
         self.ctr.add('b', self.b.shift, min_b, max_b, duration, cont)
-        self.ctr.add('log', self._print_colors)
+        #self.ctr.add('log', self._print_colors)
 
         self.ctr.start_all()
 
@@ -50,22 +57,26 @@ class LEDStrip:
         self.ctr.get_thread('log').stop()
 
 class Pin:
-    def __init__(self, ctr, color, intensity):
+    def __init__(self, pi, pin, ctr, color, intensity):
+        self.pi = pi
+        self.pin = pin
         self.ctr = ctr
         self.color = color
         self.intensity = intensity
 
         # Consts
         self.SHIFT_STEP = 1
+        self.gamma_correct = _gamma_correction()
 
     def set_intensity(self, intensity):
         self.intensity = intensity
+        self.pi.set_PWM_dutycycle(self.pin, self.gamma_correct[intensity])
 
     def full_on(self):
-        self.intensity = 255
+        self.set_intensity(255)
 
     def full_off(self):
-        self.intensity = 0
+        self.set_intensity(0)
 
     # start & end are color values between 0-255
     # Shift from min to max within duration period
@@ -89,7 +100,7 @@ class Pin:
                 break
 
             if self.intensity <= end and incresing:
-                self.intensity += self.SHIFT_STEP
+                self.set_intensity(self.intensity + self.SHIFT_STEP)
                 if self.intensity == end:
                     incresing = False
                     if not cont:
@@ -97,7 +108,7 @@ class Pin:
                         break
 
             elif self.intensity >= start and not incresing:
-                self.intensity -= self.SHIFT_STEP
+                self.set_intensity(self.intensity - self.SHIFT_STEP)
                 if self.intensity == start:
                     incresing = True
                     if not cont:
@@ -107,3 +118,17 @@ class Pin:
             time.sleep(delay)
 
         print("shifting done")
+
+
+# Generate a table of gamma-corrected colors
+def _gamma_correction(gamma_factor=2.8):
+    max_in = 255
+    max_out = 255
+
+    table = []
+
+    for i in range(0, max_in):
+        c = ((i / max_in) ** gamma_factor) * max_out + 0.5
+        table.append(int(c))
+
+    return table

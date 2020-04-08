@@ -5,12 +5,22 @@ class Thread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super(Thread, self).__init__(*args, **kwargs)
         self._stop = threading.Event()
+        self._wait = threading.Event()
 
     def stop(self):
         self._stop.set()
 
     def stopped(self):
         return self._stop.isSet()
+
+    def wait(self):
+        self._wait.set()
+
+    def cont(self):
+        self._wait.clear()
+
+    def waiting(self):
+        return self._wait.isSet()
 
 class Controller:
     def __init__(self):
@@ -48,6 +58,16 @@ class Controller:
             if t.stopped():
                 raise Warning(f"thread '{n}' is already stopped")
             t.stop()
+
+    def waiting(self, name):
+        return self.threads[name].waiting()
+
+    def cont_all(self):
+        for t in self.threads.values():
+            t.cont()
+
+    def all_waiting(self):
+        return all([t.waiting() == True for t in self.threads.values()])
 
     # True if at least one thread is alive
     def alive(self):

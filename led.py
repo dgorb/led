@@ -70,7 +70,9 @@ class Pin:
 
         # Consts
         self.SHIFT_STEP = 1
-        self.gamma_correct = _gamma_correction()
+        self.GAMMA = 2.8
+
+        self.gamma_correct = _gamma_correction_table(self.GAMMA)
 
     def set_intensity(self, intensity):
         self.intensity = intensity
@@ -82,6 +84,9 @@ class Pin:
     def full_off(self):
         self.set_intensity(0)
 
+    def get_thread(self):
+        return self.ctr.get_thread(self.color)
+
     # start & end are color values between 0-255
     # Shift from min to max within duration period
     # If cont=True, go back and forth between min and max colors
@@ -91,22 +96,32 @@ class Pin:
         if end > start:
             delay = duration / (end - start)
             incresing = True
-        else:
+        elif start > end:
             delay = duration / (start - end)
             incresing = False
 
             temp_start = start
             start = end
             end = temp_start
+        elif start == end:
+            self.set_intensity(start)
 
-        while True:
+        while True and start != end:
+            if self.ctr.all_waiting():
+                self.ctr.cont_all()
+
             if self.ctr.get_thread(self.color).stopped():
                 break
+
+            # Do not change intensity until other pins are done
+            if self.ctr.waiting(self.color):
+                continue
 
             if self.intensity <= end and incresing:
                 self.set_intensity(self.intensity + self.SHIFT_STEP)
                 if self.intensity == end:
                     incresing = False
+                    self.ctr.get_thread(self.color).wait()
                     if not cont:
                         self.ctr.stop(self.color)
                         break
@@ -115,23 +130,22 @@ class Pin:
                 self.set_intensity(self.intensity - self.SHIFT_STEP)
                 if self.intensity == start:
                     incresing = True
+                    self.ctr.get_thread(self.color).wait()
                     if not cont:
                         self.ctr.stop(self.color)
                         break
 
             time.sleep(delay)
 
-        print("shifting done")
-
 
 # Generate a table of gamma-corrected colors
-def _gamma_correction(gamma_factor=2.8):
+def _gamma_correction_table(gamma_factor=2.8):
     max_in = 255
     max_out = 255
 
     table = []
 
-    for i in range(0, max_in):
+    for i in range(0, max_in + 1):
         c = ((i / max_in) ** gamma_factor) * max_out + 0.5
         table.append(int(c))
 

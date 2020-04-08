@@ -17,7 +17,7 @@ def main():
         start_color = [int(c) for c in args.shift_start.split(',')]
         end_color = [int(c) for c in args.shift_end.split(',')]
 
-        led_strip = LEDStrip(0, 0, 0)
+        led_strip = LEDStrip(*start_color)
         led_strip.shift(start_color, end_color, int(args.shift_period), args.shift_cont)
 
     elif args.color:

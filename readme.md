@@ -1,7 +1,32 @@
 # Control LED strip with Raspberry Pi and Python (WIP)
 
 ## API
-WIP
+### Usage
+Start the API server with `python api.py`
+
+By default it runs at `http://127.0.0.1:5000`
+
+### Endpoints
+
+```
+endpoint: /set-color
+method: POST
+query params: color=<r,g,b>
+
+endpoint: /shift
+method: POST
+query params:
+    start_color=<r,g,b>
+    end_color=<r,g,b>
+    period=<int> (seconds)
+    cont=<bool>
+
+endpoint: /turn-off
+method: POST
+query params: None
+```
+
+
 
 ## CLI
 ### Set LED strip color

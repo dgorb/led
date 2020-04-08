@@ -25,7 +25,6 @@ class LEDStrip:
     def off(self):
         self.set_color(0, 0, 0)
         self.ctr.stop_all()
-        self.pi.stop()
 
     # min/max: e.g. Tuple(255, 255, 255)
     def shift(self, min, max, duration, cont=False):
@@ -40,7 +39,6 @@ class LEDStrip:
         self.ctr.add('r', self.r.shift, min_r, max_r, duration, cont)
         self.ctr.add('g', self.g.shift, min_g, max_g, duration, cont)
         self.ctr.add('b', self.b.shift, min_b, max_b, duration, cont)
-        #self.ctr.add('log', self._print_colors)
 
         self.ctr.start_all()
 
@@ -91,7 +89,7 @@ class Pin:
     # Shift from min to max within duration period
     # If cont=True, go back and forth between min and max colors
     def shift(self, start, end, duration, cont=False):
-        self.intensity = start
+        self.set_intensity(start)
 
         if end > start:
             delay = duration / (end - start)
@@ -103,18 +101,19 @@ class Pin:
             temp_start = start
             start = end
             end = temp_start
-        elif start == end:
-            self.set_intensity(start)
 
-        while True and start != end:
+        while True and not self.ctr.get_thread(self.color).stopped():
             if self.ctr.all_waiting():
                 self.ctr.cont_all()
 
-            if self.ctr.get_thread(self.color).stopped():
-                break
-
             # Do not change intensity until other pins are done
             if self.ctr.waiting(self.color):
+                continue
+
+            # The intensity is already set, so just continue the loo
+            # and wait for the other colors to be done shifting
+            if start == end:
+                self.ctr.get_thread(self.color).wait()
                 continue
 
             if self.intensity <= end and incresing:
@@ -136,7 +135,6 @@ class Pin:
                         break
 
             time.sleep(delay)
-
 
 # Generate a table of gamma-corrected colors
 def _gamma_correction_table(gamma_factor=2.8):

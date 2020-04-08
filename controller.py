@@ -4,14 +4,14 @@ import threading
 class Thread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super(Thread, self).__init__(*args, **kwargs)
-        self._stop = threading.Event()
+        self._stopper = threading.Event()
         self._wait = threading.Event()
 
     def stop(self):
-        self._stop.set()
+        self._stopper.set()
 
     def stopped(self):
-        return self._stop.isSet()
+        return self._stopper.isSet()
 
     def wait(self):
         self._wait.set()
@@ -54,10 +54,9 @@ class Controller:
         self.threads[name].stop()
 
     def stop_all(self):
-        for n, t in self.threads.items():
-            if t.stopped():
-                raise Warning(f"thread '{n}' is already stopped")
+        for t in self.threads.values():
             t.stop()
+            t.join()
 
     def waiting(self, name):
         return self.threads[name].waiting()

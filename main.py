@@ -14,8 +14,8 @@ def main():
     args = parser.parse_args()
 
     if args.shift_start and args.shift_end:
-        start_color = [int(c) for c in args.shift_start.split(',')]
-        end_color = [int(c) for c in args.shift_end.split(',')]
+        start_color = [int(c) for c in args.shift_start.rstrip().split(',')]
+        end_color = [int(c) for c in args.shift_end.rstrip().split(',')]
 
         led_strip = LEDStrip(*start_color)
         led_strip.shift(start_color, end_color, int(args.shift_period), args.shift_cont)

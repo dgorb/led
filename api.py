@@ -1,17 +1,24 @@
+import os
 import flask
 
-from flask import request, make_response
+from flask import request, make_response, send_from_directory
 from led import LEDStrip
 
-app = flask.Flask(__name__)
+app = flask.Flask(__name__, static_folder='ui/build')
 app.config["DEBUG"] = True
 
 led_strip = LEDStrip(0, 0, 0)
 
 
-@app.route('/', methods=['GET'])
-def home():
-    return "Hello"
+# Serve React
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
 
 @app.route('/turn-off', methods=['POST'])
 def turn_off():
@@ -49,4 +56,4 @@ def all_exception_handler(error):
     return 'Error', 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000, threaded=True)

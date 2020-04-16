@@ -119,6 +119,7 @@ class Pin:
             if self.intensity <= end and incresing:
                 self.set_intensity(self.intensity + self.SHIFT_STEP)
                 if self.intensity == end:
+                    time.sleep(0.5) # Stay at the max color for a bit
                     incresing = False
                     self.ctr.get_thread(self.color).wait()
                     if not cont:
@@ -128,6 +129,7 @@ class Pin:
             elif self.intensity >= start and not incresing:
                 self.set_intensity(self.intensity - self.SHIFT_STEP)
                 if self.intensity == start:
+                    time.sleep(0.5) # Stay at the min color for a bit
                     incresing = True
                     self.ctr.get_thread(self.color).wait()
                     if not cont:

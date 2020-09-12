@@ -1,7 +1,7 @@
 import os
 import flask
 
-from flask import request, make_response, send_from_directory
+from flask import request, make_response, send_from_directory, jsonify
 from led import LEDStrip
 
 app = flask.Flask(__name__, static_folder='ui/build')
@@ -49,6 +49,11 @@ def shift():
     led_strip.shift(start_color, end_color, period, cont)
 
     return make_response(f"Shifting between {start} and {end} with period of {period}s", 200)
+
+@app.route('/get-color', methods=['GET'])
+def get_color():
+    color = led_strip.get_color()
+    return make_response(jsonify(color), 200)
 
 @app.errorhandler(Exception)
 def all_exception_handler(error):

@@ -8,6 +8,8 @@ RED_PIN = 17
 GREEN_PIN = 22
 BLUE_PIN = 24
 
+GAMMA = 2.8
+
 class LEDStrip:
     def __init__(self, r, g, b):
         self.ctr = Controller()
@@ -21,6 +23,13 @@ class LEDStrip:
         self.r.set_intensity(r)
         self.g.set_intensity(g)
         self.b.set_intensity(b)
+
+    def get_color(self):
+        return {
+            'r': self.r.intensity,
+            'g': self.g.intensity,
+            'b': self.b.intensity,
+        }
 
     def off(self):
         self.set_color(0, 0, 0)
@@ -68,9 +77,8 @@ class Pin:
 
         # Consts
         self.SHIFT_STEP = 1
-        self.GAMMA = 2.8
 
-        self.gamma_correct = _gamma_correction_table(self.GAMMA)
+        self.gamma_correct = _gamma_correction_table()
 
     def set_intensity(self, intensity):
         self.intensity = intensity
@@ -139,7 +147,7 @@ class Pin:
             time.sleep(delay)
 
 # Generate a table of gamma-corrected colors
-def _gamma_correction_table(gamma_factor=2.8):
+def _gamma_correction_table(gamma_factor=GAMMA):
     max_in = 255
     max_out = 255
 

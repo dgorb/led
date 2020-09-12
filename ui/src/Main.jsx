@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {SketchPicker} from 'react-color';
+import {SketchPicker, ChromePicker} from 'react-color';
 
 function Main() {
   const [color, setColor] = useState({});
@@ -18,10 +18,15 @@ function Main() {
   };
 
   return (
-    <div>
-        <SketchPicker
+    <div style={{
+      height: '100vh',
+      width: '100wv',
+      background: `rgb(${color.r}, ${color.g}, ${color.b})`
+      }}>
+        <ChromePicker
             color={color}
             onChange={handleChange}
+            disableAlpha={true}
         />
     </div>
   );

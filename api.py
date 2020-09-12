@@ -4,6 +4,8 @@ import flask
 from flask import request, make_response, send_from_directory, jsonify
 from led import LEDStrip
 
+from favorites import store_favorite, read_favorites
+
 app = flask.Flask(__name__, static_folder='ui/build')
 app.config["DEBUG"] = True
 
@@ -54,6 +56,20 @@ def shift():
 def get_color():
     color = led_strip.get_color()
     return make_response(jsonify(color), 200)
+
+@app.route('/favorite', methods=['POST'])
+def favorite():
+    color = request.args.get('color')
+
+    try:
+        store_favorite(color)
+        return make_response("Saved favorite", 200)
+    except Exception as e:
+        return make_response(f"Server error: {e}", 500)
+
+@app.route('/favorites', methods=['GET'])
+def favorites():
+    return make_response(jsonify(read_favorites()))
 
 @app.errorhandler(Exception)
 def all_exception_handler(error):

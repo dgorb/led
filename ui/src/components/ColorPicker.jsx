@@ -3,8 +3,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Slider from '@material-ui/core/Slider';
 import {CirclePicker} from 'react-color';
-import {HSVtoRGB, RGBtoHEX, RGBtoHSV} from '../scripts/color.js';
-import {coordsToHSV, distance} from '../scripts/utils.js';
+import {HSVtoRGB, RGBtoHEX, RGBtoHSV, coordsToHSV, HSVToCoords, distance} from '../scripts/utils.js';
 
 // TODO: calculate dynamically based on image/img element dimensions?
 const D = 250; // Color wheel image width/height
@@ -17,6 +16,22 @@ export default function ColorPicker(props) {
     const [pageX, setPageX] = useState(0);
     const [pageY, setPageY] = useState(0);
 
+    useEffect(() => {
+        let rgb = props.initRGB;
+        let hsv = RGBtoHSV(props.initRGB);
+        let hex = RGBtoHEX(props.initRGB);
+
+        setColor({
+            rgb: rgb,
+            hsv: hsv,
+            hex: hex,
+        });
+
+        let initCursorCoords = HSVToCoords(hsv, R);
+        setPageX(initCursorCoords[0]);
+        setPageY(initCursorCoords[1]);
+    }, [])
+
     const onMouseMove = (e) => {
         // Only pick color when pressing the left mouse button
         if (e.buttons == 1) {
@@ -25,9 +40,9 @@ export default function ColorPicker(props) {
                 e.pageY - e.target.offsetTop,
             );
             setColor(clr);
-            props.onChange(clr, e);
             setPageX(e.pageX);
             setPageY(e.pageY);
+            props.onChange(clr, e);
         }
     }
 
@@ -37,9 +52,9 @@ export default function ColorPicker(props) {
             e.touches[0].pageY - e.target.offsetTop
         );
         setColor(clr);
-        props.onChange(clr,  e);
         setPageX(e.touches[0].pageX);
         setPageY(e.touches[0].pageY);
+        props.onChange(clr,  e);
     }
 
     const onBrightnessChange = (e, value) => {
@@ -137,7 +152,6 @@ function Cursor(props) {
 
     useEffect(() => {
         let d = distance(R, props.x, props.y);
-        console.log(d);
         if (d <= R + 10) {
             setX(props.x);
             setY(props.y);

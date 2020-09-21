@@ -6,30 +6,42 @@ import {InitColorAPI, SetColorAPI} from './scripts/api.js';
 
 function Main() {
   const [color, setColor] = useState({rgb: [0, 0, 0]});
+  const [loading, setLoading] = useState(true);
 
-  /*useEffect(() => {
-    initColorAPI().then(response => {
+  useEffect(() => {
+    InitColorAPI().then(response => {
       response.json().then(data => {
-        setColor(data);
+        setColor({
+          rgb: [
+            data.r,
+            data.g,
+            data.b,
+          ]
+        });
+        setLoading(false);
       })
     })
-  }, []);*/
+  }, []);
 
   let handleChange = (clr, event) => {
     setColor(clr);
     SetColorAPI(clr.rgb[0], clr.rgb[1], clr.rgb[2])
   }
 
-  return (
-    <div style={{
-      height: '100vh',
-      width: '100wv',
-      background: `rgb(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})`
-      }}>
-        <ColorPicker setColor={setColor} onChange={handleChange}/>
-        <Like color={color.hex} setColor={setColor} />
-    </div>
-  );
+  if (loading) {
+    return <p>Loading...</p>
+  } else {
+    return (
+      <div style={{
+        height: '100vh',
+        width: '100wv',
+        background: `rgb(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})`
+        }}>
+          <ColorPicker initRGB={[color.rgb[0], color.rgb[1], color.rgb[2]]} setColor={setColor} onChange={handleChange}/>
+          <Like color={color.hex} setColor={setColor} />
+      </div>
+    );
+  }
 }
 
 export default Main;

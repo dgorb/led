@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {ChromePicker, CirclePicker} from 'react-color';
-import Favorites from './components/FAvorites.jsx';
+import Favorites from './components/Favorites.jsx';
 import ColorPicker from './components/ColorPicker.jsx';
 import {InitColorAPI, SetColorAPI, TurnOffAPI, TurnOnAPI} from './scripts/api.js';
 import ToggleOffOutlinedIcon from '@material-ui/icons/ToggleOffOutlined';

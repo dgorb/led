@@ -27,6 +27,9 @@ export default function ColorPicker(props) {
             hex: hex,
         });
 
+        setBrightness(hsv[2]);
+        console.log(hsv[2])
+
         let initCursorCoords = HSVToCoords(hsv, R);
         setPageX(initCursorCoords[0]);
         setPageY(initCursorCoords[1]);
@@ -34,7 +37,7 @@ export default function ColorPicker(props) {
 
     const onMouseMove = (e) => {
         // Only pick color when pressing the left mouse button
-        if (e.buttons == 1) {
+        if (e.buttons == 1 || e.type == 'click') {
             let clr = colorFromCoords(
                 e.pageX - e.target.offsetLeft,
                 e.pageY - e.target.offsetTop,
@@ -91,7 +94,7 @@ export default function ColorPicker(props) {
     }
 
     return (
-        <div style={{width: window.innerWidth, backgroundColor: "white"}}>
+        <div style={{width: window.innerWidth, backgroundColor: "white", paddingLeft: "10px", paddingRight: "10px"}}>
             <img className="nodrag" width="250px" height="250px" src="/color-wheel.png"
                 onClick={onMouseMove}
                 onMouseMove={onMouseMove}
@@ -99,7 +102,6 @@ export default function ColorPicker(props) {
                 onTouchStart={onTouch}
             />
             <BrightnessSlider value={brightness} onChange={onBrightnessChange} />
-            <CirclePicker style={{backgroundColor: "white"}} colors={[color.hex]} />
             <br />
             <ColorDisplay color={color} />
             <Cursor x={pageX} y={pageY} />
@@ -113,35 +115,38 @@ function BrightnessSlider(props) {
     }
 
     return (
-        <div style={{width: window.innerWidth-20, backgroundColor: "white", marginLeft: "10px", marginRight: "10px"}}>
+        <div style={{width: "90%", backgroundColor: "white", paddingRight: "3%"}}>
             <Typography id="continuous-slider" gutterBottom>
                 Brightness
             </Typography>
-            <Grid container spacing={2}>
-                <Grid item xs>
-                    <Slider
-                        value={props.value}
-                        onChange={handleChange}
-                        min={0.0}
-                        max={1.0}
-                        step={0.01}
-                        aria-labelledby="continuous-slider"
-                    />
-                </Grid>
-            </Grid>
+            <Slider
+                value={props.value}
+                onChange={handleChange}
+                min={0.0}
+                max={1.0}
+                step={0.01}
+                aria-labelledby="continuous-slider"
+            />
         </div>
     )
 }
 
 function ColorDisplay(props) {
+    const [detailsVisible, setDetailsVisible] = useState(false);
+
+    const toggleDetails = () => {
+        setDetailsVisible(!detailsVisible);
+    }
+
     return (
-        <div style={{width: window.innerWidth, backgroundColor: "white"}}>
+        <div style={{width: window.innerWidth, backgroundColor: "white"}} onClick={toggleDetails}>
+            <CirclePicker style={{backgroundColor: "white", marginLeft: "10px"}} colors={[props.color.hex]} />
             <br />
-            <Typography variant="overline" display="block" gutterBottom>
+            {detailsVisible && <Typography variant="overline" display="block" gutterBottom>
                 HSV: {props.color.hsv[0]}, {props.color.hsv[1]}, {props.color.hsv[2]} <br />
                 RGB: {props.color.rgb[0]}, {props.color.rgb[1]}, {props.color.rgb[2]} <br />
                 Hex: {props.color.hex}
-            </Typography>
+            </Typography> }
         </div>
     )
 }

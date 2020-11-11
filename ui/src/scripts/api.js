@@ -18,3 +18,11 @@ export function LikeAPI(hex) {
 export function FavoritesAPI() {
   return APICall("GET", '/favorites')
 }
+
+export function TurnOnAPI(r, g, b) {
+  return APICall("POST", `/turn-on?color=${r},${g},${b}`)
+}
+
+export function TurnOffAPI() {
+  return APICall("POST", '/turn-off')
+}

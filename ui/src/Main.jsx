@@ -1,8 +1,10 @@
 import React, {useState, useEffect} from 'react';
 import {ChromePicker, CirclePicker} from 'react-color';
-import Like from './components/Like.jsx';
+import Favorites from './components/FAvorites.jsx';
 import ColorPicker from './components/ColorPicker.jsx';
-import {InitColorAPI, SetColorAPI} from './scripts/api.js';
+import {InitColorAPI, SetColorAPI, TurnOffAPI, TurnOnAPI} from './scripts/api.js';
+import ToggleOffOutlinedIcon from '@material-ui/icons/ToggleOffOutlined';
+import ToggleOnOutlinedIcon from '@material-ui/icons/ToggleOnOutlined';
 
 function Main() {
   const [color, setColor] = useState({rgb: [0, 0, 0]});
@@ -35,12 +37,35 @@ function Main() {
       <div style={{
         height: '100vh',
         width: '100wv',
-        background: `rgb(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})`
         }}>
+          <OnOffButton color={color.rgb}/>
           <ColorPicker initRGB={[color.rgb[0], color.rgb[1], color.rgb[2]]} setColor={setColor} onChange={handleChange}/>
-          <Like color={color.hex} setColor={setColor} />
+          <Favorites color={color.hex} setColor={setColor} />
       </div>
     );
+  }
+}
+
+function OnOffButton(props) {
+  const [on, setOn] = useState(true);
+
+  const toggle = () => {
+    if (on) {
+      TurnOffAPI()
+    } else {
+      TurnOnAPI(props.color[0], props.color[1], props.color[2])
+    }
+    setOn(!on);
+  }
+
+  if (on) {
+    return (
+      <ToggleOnOutlinedIcon fontSize="large" onClick={toggle}/>
+    )
+  } else {
+    return (
+      <ToggleOffOutlinedIcon fontSize="large" onClick={toggle}/>
+    )
   }
 }
 

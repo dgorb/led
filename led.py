@@ -20,6 +20,8 @@ class LEDStrip:
         self.set_color(r, g, b)
 
     def set_color(self, r, g, b):
+        self.ctr.stop_all()
+
         self.r.set_intensity(r)
         self.g.set_intensity(g)
         self.b.set_intensity(b)
@@ -31,9 +33,21 @@ class LEDStrip:
             'b': self.b.intensity,
         }
 
-    def off(self):
-        self.set_color(0, 0, 0)
-        self.ctr.stop_all()
+    def off(self, fade_out=False):
+        c = self.get_color()
+        if fade_out:
+            self.ctr.stop_all()
+            self.shift((c['r'], c['g'], c['b']), (0, 0, 0), 2)
+        else:
+            self.set_color(0, 0, 0)
+            self.ctr.stop_all()
+
+    def on(self, r, g, b, fade_in=False):
+        if fade_in:
+            self.ctr.stop_all()
+            self.shift((0, 0, 0), (r, g, b), 2)
+        else:
+            self.set_color(r, g, b)
 
     # min/max: e.g. Tuple(255, 255, 255)
     def shift(self, min, max, duration, cont=False):

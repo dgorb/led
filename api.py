@@ -24,9 +24,16 @@ def serve(path):
 
 @app.route('/turn-off', methods=['POST'])
 def turn_off():
-    led_strip.off()
+    led_strip.off(fade_out=True)
 
     return make_response(f"LED strip turned off!", 200)
+
+@app.route('/turn-on', methods=['POST'])
+def turn_on():
+    color = request.args.get('color')
+    led_strip.on(*[int(c) for c in color.split(',')], fade_in=True)
+
+    return make_response(f"LED strip turned on!", 200)
 
 @app.route('/set-color', methods=['POST'])
 def set_color():

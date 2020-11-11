@@ -70,9 +70,9 @@ export function RGBtoHSV(rgb) {
         s = diff / cMax;
     }
 
-    let v = cMax * 100;
+    let v = cMax;
 
-    return [round(h), round(s), v]
+    return [round(h), round(s), round(v)]
 }
 
 export function hue(r, x, y) {

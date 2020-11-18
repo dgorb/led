@@ -31,7 +31,7 @@ export default function Favorites(props) {
   }, [isClick]);
 
   let handleChange = (color, event) => {
-    props.setColor({ rgb: [color.rgb.r, color.rgb.g, color.rgb.b]});
+    props.setColor([color.rgb.r, color.rgb.g, color.rgb.b]);
     SetColorAPI(color.rgb.r, color.rgb.g, color.rgb.b)
   };
 

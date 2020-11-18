@@ -11,29 +11,45 @@ const R = D / 2; // Color wheel "radius", half of image
                  // (assuming that the color wheel takes up the whole image)
 
 export default function ColorPicker(props) {
-    const [color, setColor] = useState({hsv: [0,0,0], rgb: [0,0,0], hex: ""});
+    const [color, setColor] = useState(props.color);
     const [brightness, setBrightness] = useState(1);
     const [pageX, setPageX] = useState(0);
     const [pageY, setPageY] = useState(0);
 
     useEffect(() => {
-        let rgb = props.initRGB;
-        let hsv = RGBtoHSV(props.initRGB);
-        let hex = RGBtoHEX(props.initRGB);
+       setWheelPosition(color);
+    }, [])
 
-        setColor({
+    useEffect(() => {
+        if (color.hex !== props.color.hex) {
+            setColor(props.color);
+            setWheelPosition(props.color);
+        }
+    }, [props.color])
+
+    const setWheelPosition = (color) => {
+        setBrightness(color.hsv[2]);
+        const initCursorCoords = HSVToCoords(color.hsv, R);
+        setPageX(initCursorCoords[0]);
+        setPageY(initCursorCoords[1]);
+    }
+
+    const setColorFromRGB = (rgb) => {
+        let hsv = RGBtoHSV(rgb);
+        let hex = RGBtoHEX(rgb);
+
+        props.setColor({
             rgb: rgb,
             hsv: hsv,
             hex: hex,
         });
 
         setBrightness(hsv[2]);
-        console.log(hsv[2])
 
         let initCursorCoords = HSVToCoords(hsv, R);
         setPageX(initCursorCoords[0]);
         setPageY(initCursorCoords[1]);
-    }, [])
+    }
 
     const onMouseMove = (e) => {
         // Only pick color when pressing the left mouse button

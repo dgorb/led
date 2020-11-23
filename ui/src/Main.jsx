@@ -9,7 +9,7 @@ import ToggleOffOutlinedIcon from '@material-ui/icons/ToggleOffOutlined';
 import ToggleOnOutlinedIcon from '@material-ui/icons/ToggleOnOutlined';
 
 function Main() {
-  const [color, setColor] = useState({rgb: [0, 0, 0], hsv: [0, 0, 0], hex: ""});
+  const [color, setColor] = useState({rgb: [0, 0, 0], hsv: [0, 0, 0], hex: "#000000"});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

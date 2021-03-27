@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Slider from '@material-ui/core/Slider';
 import {CirclePicker} from 'react-color';
-import {HSVtoRGB, RGBtoHEX, RGBtoHSV, coordsToHSV, HSVToCoords, distance} from '../scripts/utils.js';
+import ColorDisplay from './ColorDisplay.jsx'
+import {HSVtoRGB, RGBtoHEX, RGBtoHSV, coordsToHSV, HSVToCoords, distance, distanceWithoutR} from '../scripts/utils.js';
 
 // TODO: calculate dynamically based on image/img element dimensions?
 const D = 250; // Color wheel image width/height
@@ -12,73 +13,63 @@ const R = D / 2; // Color wheel "radius", half of image
 
 export default function ColorPicker(props) {
     const [color, setColor] = useState(props.color);
-    const [brightness, setBrightness] = useState(1);
+    const [cursorCoords, setCursorCoords] = useState([0, 0]);
     const [pageX, setPageX] = useState(0);
     const [pageY, setPageY] = useState(0);
+    const wheelRef = useRef(null);
 
     useEffect(() => {
-       setWheelPosition(color);
+       setCursor(color);
     }, [])
 
     useEffect(() => {
         if (color.hex !== props.color.hex) {
             setColor(props.color);
-            setWheelPosition(props.color);
+            setCursor(props.color);
         }
     }, [props.color])
 
-    const setWheelPosition = (color) => {
-        setBrightness(color.hsv[2]);
+    const setCursor = (color) => {
         const initCursorCoords = HSVToCoords(color.hsv, R);
-        setPageX(initCursorCoords[0]);
-        setPageY(initCursorCoords[1]);
-    }
-
-    const setColorFromRGB = (rgb) => {
-        let hsv = RGBtoHSV(rgb);
-        let hex = RGBtoHEX(rgb);
-
-        props.setColor({
-            rgb: rgb,
-            hsv: hsv,
-            hex: hex,
-        });
-
-        setBrightness(hsv[2]);
-
-        let initCursorCoords = HSVToCoords(hsv, R);
-        setPageX(initCursorCoords[0]);
-        setPageY(initCursorCoords[1]);
+        setPageX(initCursorCoords[0] + wheelRef.current.getBoundingClientRect().x);
+        setPageY(initCursorCoords[1] + wheelRef.current.getBoundingClientRect().y);
     }
 
     const onMouseMove = (e) => {
         // Only pick color when pressing the left mouse button
         if (e.buttons == 1 || e.type == 'click') {
             let clr = colorFromCoords(
-                e.pageX - e.target.offsetLeft,
-                e.pageY - e.target.offsetTop,
+                Math.round(e.pageX - wheelRef.current.getBoundingClientRect().x),
+                Math.round(e.pageY - wheelRef.current.getBoundingClientRect().y),
             );
             setColor(clr);
             setPageX(e.pageX);
             setPageY(e.pageY);
             props.onChange(clr, e);
+            props.setColor(clr);
         }
     }
 
+    // Mobile
     const onTouch = (e) => {
         let clr = colorFromCoords(
-            e.touches[0].pageX - e.target.offsetLeft,
-            e.touches[0].pageY - e.target.offsetTop
+            Math.round(e.touches[0].pageX - wheelRef.current.getBoundingClientRect().x),
+            Math.round(e.touches[0].pageY - wheelRef.current.getBoundingClientRect().y),
         );
         setColor(clr);
         setPageX(e.touches[0].pageX);
         setPageY(e.touches[0].pageY);
         props.onChange(clr,  e);
+        props.setColor(clr);
     }
 
     const onBrightnessChange = (e, value) => {
-        if (value != brightness) {
-            setBrightness(value);
+        if (value != color.hsv[2]) {
+            setColor({...color, hsv: [
+                color.hsv[0],
+                color.hsv[1],
+                value,
+            ]})
 
             let hsv = [color.hsv[0], color.hsv[1], value];
             let rgb = HSVtoRGB(color.hsv[0], color.hsv[1], value);
@@ -96,8 +87,8 @@ export default function ColorPicker(props) {
     const colorFromCoords = (x, y) => {
         let d = distance(R, x, y);
         if (d <= R) { // Only calculate color if we're within the color wheel
-            const hsv = coordsToHSV(x, y, R);
-            const rgb = HSVtoRGB(hsv[0], hsv[1], brightness);
+            const hsv = coordsToHSV(x, y, R, color.hsv[2]);
+            const rgb = HSVtoRGB(hsv[0], hsv[1], hsv[2]);
             const hex = RGBtoHEX(rgb);
             return {
                 hsv: hsv,
@@ -109,18 +100,41 @@ export default function ColorPicker(props) {
         }
     }
 
+    const wheelCenter = () => {
+        if (wheelRef.current) {
+            let wheel = wheelRef.current.getBoundingClientRect();
+            let centerX = wheel.x + wheel.width / 2;
+            let centerY = wheel.y + wheel.height / 2;
+            return [centerX, centerY];
+        } else {
+            return [0, 0];
+        }
+    }
+
+    const insideWheel = (x, y) => {
+        // TODO: Calculate radius dynamically
+        let [centerX, centerY] = wheelCenter();
+        let d = distanceWithoutR(x, y, centerX, centerY);
+        if (d <= R) {
+            return true
+        }
+
+        return false
+    }
+
     return (
         <div style={{width: window.innerWidth, backgroundColor: "white", paddingLeft: "10px", paddingRight: "10px"}}>
             <img className="nodrag" width="250px" height="250px" src="/color-wheel.png"
+                ref={wheelRef}
                 onClick={onMouseMove}
                 onMouseMove={onMouseMove}
                 onTouchMove={onTouch}
                 onTouchStart={onTouch}
             />
-            <BrightnessSlider value={brightness} onChange={onBrightnessChange} />
+            <BrightnessSlider value={color.hsv[2]} onChange={onBrightnessChange} />
             <br />
-            <ColorDisplay color={color} />
-            <Cursor x={pageX} y={pageY} />
+            { props.showCurrentColor && <ColorDisplay color={color} /> }
+            <Cursor x={pageX} y={pageY} insideWheel={insideWheel(pageX, pageY)} />
         </div>
     )
 }
@@ -147,33 +161,12 @@ function BrightnessSlider(props) {
     )
 }
 
-function ColorDisplay(props) {
-    const [detailsVisible, setDetailsVisible] = useState(false);
-
-    const toggleDetails = () => {
-        setDetailsVisible(!detailsVisible);
-    }
-
-    return (
-        <div style={{width: window.innerWidth, backgroundColor: "white"}} onClick={toggleDetails}>
-            <CirclePicker style={{backgroundColor: "white", marginLeft: "10px"}} colors={[props.color.hex]} />
-            <br />
-            {detailsVisible && <Typography variant="overline" display="block" gutterBottom>
-                HSV: {props.color.hsv[0]}, {props.color.hsv[1]}, {props.color.hsv[2]} <br />
-                RGB: {props.color.rgb[0]}, {props.color.rgb[1]}, {props.color.rgb[2]} <br />
-                Hex: {props.color.hex}
-            </Typography> }
-        </div>
-    )
-}
-
 function Cursor(props) {
     const [x, setX] = useState(props.x);
     const [y, setY] = useState(props.y);
 
     useEffect(() => {
-        let d = distance(R, props.x, props.y);
-        if (d <= R + 10) {
+        if (props.insideWheel) {
             setX(props.x);
             setY(props.y);
         }

@@ -40,7 +40,7 @@ export default function Favorites(props) {
     <div style={{backgroundColor: 'white', width: window.innerWidth, paddingLeft: "10px"}}>
       <Typography>Favorites</Typography>
       <Heart isClick={isClick} onClick={() => {
-          LikeAPI(props.color.replace('#', ''));
+          LikeAPI(props.color.hex.replace('#', ''));
           setClick(!isClick)
       }} />
       <CirclePicker

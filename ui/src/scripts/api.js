@@ -26,3 +26,9 @@ export function TurnOnAPI(r, g, b) {
 export function TurnOffAPI() {
   return APICall("POST", '/turn-off')
 }
+
+export function ShiftAPI(color1, color2, period) {
+  let rgb1 = `${color1.rgb[0]},${color1.rgb[1]},${color1.rgb[2]}`;
+  let rgb2 = `${color2.rgb[0]},${color2.rgb[1]},${color2.rgb[2]}`;
+  return APICall("POST", `/shift?start=${rgb1}&end=${rgb2}&period=${period}&cont=true`)
+}

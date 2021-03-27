@@ -97,6 +97,10 @@ export function distance(r, x, y) {
     return Math.sqrt(Math.pow(x-r, 2)+Math.pow(y-r, 2))
 }
 
+export function distanceWithoutR(x1, y1, x2, y2) {
+    return Math.sqrt(Math.pow(x1-x2, 2)+Math.pow(y1-y2, 2))
+}
+
 export function coordsToHSV(x, y, r, b=1) {
     let h = hue(r, x, y);
     let d = distance(r, x, y);
@@ -122,3 +126,6 @@ export function HSVToCoords(hsv, r) {
 function round(x) {
     return Math.round(x * 100) / 100;
 }
+
+export const COLOR_BLACK = {rgb: [0, 0, 0], hsv: [0, 0, 0], hex: "#000000"};
+export const COLOR_WHITE = {rgb: [255, 255, 255], hsv: [360, 1, 1], hex: "#ffffff"};

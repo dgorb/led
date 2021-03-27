@@ -2,14 +2,15 @@ import React, {useState, useEffect} from 'react';
 import {ChromePicker, CirclePicker} from 'react-color';
 import Favorites from './components/Favorites.jsx';
 import ColorPicker from './components/ColorPicker.jsx';
+import Shifter from './components/Shifter.jsx';
 import {InitColorAPI, SetColorAPI, TurnOffAPI, TurnOnAPI} from './scripts/api.js';
-import {RGBtoHEX, RGBtoHSV} from './scripts/utils.js';
+import {RGBtoHEX, RGBtoHSV, COLOR_BLACK} from './scripts/utils.js';
 
 import ToggleOffOutlinedIcon from '@material-ui/icons/ToggleOffOutlined';
 import ToggleOnOutlinedIcon from '@material-ui/icons/ToggleOnOutlined';
 
 function Main() {
-  const [color, setColor] = useState({rgb: [0, 0, 0], hsv: [0, 0, 0], hex: "#000000"});
+  const [color, setColor] = useState(COLOR_BLACK);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,8 +45,10 @@ function Main() {
         width: '100wv',
         }}>
           <OnOffButton color={color}/>
-          <ColorPicker color={color} setColor={setColor} onChange={handleChange}/>
+          <ColorPicker color={color} setColor={setColor} onChange={handleChange} showCurrentColor={true} />
           <Favorites color={color} setColor={setColorWithRGB} />
+          <br />
+          <Shifter />
       </div>
     );
   }

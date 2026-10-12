@@ -216,6 +216,20 @@
     if (state) { on = state.on; renderPower(); }
   });
 
+  // ---- effects -------------------------------------------------------
+
+  document.querySelectorAll(".effect").forEach((btn) =>
+    btn.addEventListener("click", async () => {
+      const state = await api("POST", "/effect", { name: btn.dataset.effect });
+      if (state) { on = state.on; renderPower(); markEffect(state.mode); }
+    })
+  );
+
+  const markEffect = (mode) =>
+    document.querySelectorAll(".effect").forEach((b) =>
+      b.classList.toggle("active", mode.type === "effect" && mode.name === b.dataset.effect)
+    );
+
   // ---- power ---------------------------------------------------------
 
   $("power").addEventListener("click", async () => {
@@ -301,12 +315,13 @@
       on = state.on;
       renderPower();
       const mode = state.mode;
+      markEffect(mode);
       if (mode.type === "static") {
         Object.assign(hsv, rgbToHsv(fromHex(mode.color)));
         renderColor();
       }
       if (firstSync) {
-        showTab(mode.type);
+        showTab(mode.type === "effect" ? "effects" : mode.type);
         if (mode.type === "fade") {
           $("fade-a").value = mode.colors[0];
           $("fade-b").value = mode.colors[1];

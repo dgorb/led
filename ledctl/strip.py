@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import os
+import random
 import threading
 import time
 
@@ -34,6 +35,30 @@ def fade_loop(a, b, period):
         phase = ((time.monotonic() - start) / period) % 2
         k = phase if phase <= 1 else 2 - phase
         yield lerp(a, b, (1 - math.cos(math.pi * k)) / 2)
+
+
+def candle_loop():
+    """Warm flame: smoothed random brightness with occasional deeper dips.
+
+    Dimmer also means redder, like a real flame.
+    """
+    dim, bright = (80.0, 20.0, 2.0), (255.0, 150.0, 40.0)
+    rng = random.Random()
+    level = target = 0.85
+    next_change = 0.0
+    last = time.monotonic()
+    while True:
+        now = time.monotonic()
+        dt, last = now - last, now
+        if now >= next_change:
+            low = 0.35 if rng.random() < 0.2 else 0.7
+            target = rng.uniform(low, 1.0)
+            next_change = now + rng.uniform(0.05, 0.3)
+        level += (target - level) * min(1.0, dt * 10)
+        yield lerp(dim, bright, level)
+
+
+EFFECTS = {"candle": candle_loop}
 
 
 def rainbow_loop(period):
@@ -119,6 +144,11 @@ class LEDStrip:
         }
         self._set_mode(mode)
 
+    def set_effect(self, name):
+        if name not in EFFECTS:
+            raise ValueError(f"unknown effect {name!r}, expected one of: {', '.join(EFFECTS)}")
+        self._set_mode({"type": "effect", "name": name})
+
     def set_rainbow(self, period):
         self._set_mode({"type": "rainbow", "period": _period(period)})
 
@@ -148,6 +178,8 @@ class LEDStrip:
         elif mode["type"] == "fade":
             a, b = (parse_hex(c) for c in mode["colors"])
             self._run(self._chain(transition(self._current, a, 0.5), fade_loop(a, b, mode["period"])))
+        elif mode["type"] == "effect":
+            self._run(EFFECTS[mode["name"]]())
         elif mode["type"] == "rainbow":
             self._run(rainbow_loop(mode["period"]))
 
@@ -196,8 +228,10 @@ class LEDStrip:
             return None
         try:
             data = json.loads(self._state_file.read_text())
-            if data["mode"]["type"] not in ("static", "fade", "rainbow"):
+            if data["mode"]["type"] not in ("static", "fade", "rainbow", "effect"):
                 raise ValueError("unknown mode")
+            if data["mode"]["type"] == "effect" and data["mode"]["name"] not in EFFECTS:
+                raise ValueError("unknown effect")
             return {"on": bool(data["on"]), "mode": data["mode"]}
         except (OSError, ValueError, KeyError, TypeError):
             log.warning("Ignoring unreadable state file %s", self._state_file)

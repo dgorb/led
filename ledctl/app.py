@@ -54,6 +54,11 @@ def create_app(strip, favorites):
         strip.set_fade(field(data, "start"), field(data, "end"), field(data, "period"))
         return jsonify(strip.state())
 
+    @app.post("/api/effect")
+    def set_effect():
+        strip.set_effect(field(body(), "name"))
+        return jsonify(strip.state())
+
     @app.post("/api/rainbow")
     def set_rainbow():
         strip.set_rainbow(field(body(), "period"))

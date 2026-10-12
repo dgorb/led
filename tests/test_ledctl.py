@@ -66,6 +66,26 @@ def test_state_persists(strip, tmp_path):
     other.close()
 
 
+def test_candle_effect_stays_in_range_and_persists(strip, tmp_path):
+    strip.set_effect("candle")
+    seen = []
+    for _ in range(20):
+        time.sleep(0.03)
+        seen.append(strip._current)
+    assert all(0 <= c <= 255 for rgb in seen for c in rgb)
+    assert len({round(r) for r, _, _ in seen}) > 1  # it actually flickers
+    assert strip.state()["mode"] == {"type": "effect", "name": "candle"}
+    other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
+    other.restore()
+    assert other.state()["mode"]["name"] == "candle"
+    other.close()
+
+
+def test_effect_api_validation(client):
+    assert client.post("/api/effect", json={"name": "nope"}).status_code == 400
+    assert client.post("/api/effect", json={"name": "candle"}).get_json()["mode"]["name"] == "candle"
+
+
 def test_fade_same_colors_does_not_crash(strip):
     strip.set_fade("#123456", "#123456", 1)
     time.sleep(0.1)

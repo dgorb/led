@@ -97,6 +97,7 @@ All bodies are JSON; every endpoint returns the new state `{on, mode, color}` or
 | POST   | `/api/power`              | `{"on": true}`                        |
 | POST   | `/api/fade`               | `{"start": "#..", "end": "#..", "period": 4}` (seconds one way) |
 | POST   | `/api/rainbow`            | `{"period": 20}` (seconds per cycle)  |
+| POST   | `/api/effect`             | `{"name": "candle"}`                  |
 | GET    | `/api/favorites`          |                                       |
 | POST   | `/api/favorites`          | `{"color": "#rrggbb"}`                |
 | DELETE | `/api/favorites/<rrggbb>` |                                       |

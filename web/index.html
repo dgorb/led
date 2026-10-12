@@ -31,6 +31,7 @@
       <button role="tab" data-tab="static" class="active">Color</button>
       <button role="tab" data-tab="fade">Fade</button>
       <button role="tab" data-tab="rainbow">Rainbow</button>
+      <button role="tab" data-tab="effects">Effects</button>
     </nav>
 
     <section class="card panel" id="panel-static">
@@ -65,6 +66,13 @@
       <label class="slider-label">Cycle time <span id="rainbow-period-val"></span></label>
       <input type="range" id="rainbow-period" min="2" max="120" value="20">
       <button class="primary" id="rainbow-go">Start rainbow</button>
+    </section>
+
+    <section class="card panel" id="panel-effects" hidden>
+      <button class="effect" data-effect="candle">
+        <span class="effect-icon candle-icon" aria-hidden="true"></span>
+        <span class="effect-text"><strong>Candle</strong><small>Warm, softly flickering flame</small></span>
+      </button>
     </section>
 
     <section class="card">

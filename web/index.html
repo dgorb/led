@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>LED</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g'><stop offset='0' stop-color='%23ff4d8d'/><stop offset='1' stop-color='%234dc3ff'/></linearGradient></defs><circle cx='16' cy='16' r='13' fill='url(%23g)'/></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow" id="glow"></div>
+
+  <main class="app">
+    <header>
+      <h1>Lights</h1>
+      <button class="power" id="power" aria-label="Toggle power" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/>
+        </svg>
+      </button>
+    </header>
+
+    <section class="strip-preview" id="strip-preview" hidden>
+      <div class="strip" id="strip"></div>
+      <p class="hint">Virtual strip: mock mode, no hardware connected</p>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="static" class="active">Color</button>
+      <button role="tab" data-tab="fade">Fade</button>
+      <button role="tab" data-tab="rainbow">Rainbow</button>
+    </nav>
+
+    <section class="card panel" id="panel-static">
+      <div class="wheel-wrap" id="wheel-wrap">
+        <canvas id="wheel"></canvas>
+        <div class="cursor" id="cursor"></div>
+      </div>
+      <label class="slider-label">Brightness <span id="brightness-val"></span></label>
+      <input type="range" id="brightness" min="0" max="100" value="100">
+      <div class="current">
+        <span class="swatch big" id="current-swatch"></span>
+        <code id="current-hex">#000000</code>
+        <button class="ghost" id="save-fav">♥ Save</button>
+      </div>
+    </section>
+
+    <section class="card panel" id="panel-fade" hidden>
+      <p class="hint">Ease back and forth between two colors.</p>
+      <div class="pair">
+        <label class="color-input"><input type="color" id="fade-a" value="#ff2d78"><span>From</span></label>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <label class="color-input"><input type="color" id="fade-b" value="#2dc8ff"><span>To</span></label>
+      </div>
+      <label class="slider-label">Speed <span id="fade-period-val"></span></label>
+      <input type="range" id="fade-period" min="1" max="60" value="4">
+      <button class="primary" id="fade-go">Start fade</button>
+    </section>
+
+    <section class="card panel" id="panel-rainbow" hidden>
+      <p class="hint">Cycle smoothly through every hue.</p>
+      <div class="rainbow-bar"></div>
+      <label class="slider-label">Cycle time <span id="rainbow-period-val"></span></label>
+      <input type="range" id="rainbow-period" min="2" max="120" value="20">
+      <button class="primary" id="rainbow-go">Start rainbow</button>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <h2>Favorites</h2>
+        <button class="ghost" id="edit-favs">Edit</button>
+      </div>
+      <div class="favs" id="favs"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

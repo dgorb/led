@@ -1,0 +1,2 @@
+flask>=2.2
+pigpio>=1.78; sys_platform == "linux"

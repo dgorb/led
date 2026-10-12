@@ -1,0 +1,13 @@
+[Unit]
+Description=LED strip web controller
+After=network.target pigpiod.service
+Wants=pigpiod.service
+
+[Service]
+WorkingDirectory=/home/pi/led
+ExecStart=/home/pi/led/.venv/bin/python -m ledctl
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target

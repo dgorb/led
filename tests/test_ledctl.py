@@ -193,6 +193,74 @@ def test_new_effects_selectable_and_resume(strip, tmp_path):
         other.close()
 
 
+class FakePi:
+    connected = True
+
+    def __init__(self):
+        self.freq = {}
+        self.range = {}
+        self.duty = []
+
+    def set_PWM_frequency(self, pin, hz):
+        self.freq[pin] = hz
+
+    def get_PWM_frequency(self, pin):
+        return self.freq[pin]
+
+    def get_PWM_real_range(self, pin):
+        return 1000 if self.freq[pin] == 200 else 250
+
+    def set_PWM_range(self, pin, r):
+        self.range[pin] = r
+
+    def set_PWM_dutycycle(self, pin, duty):
+        self.duty.append((pin, duty))
+
+    def stop(self):
+        pass
+
+
+@pytest.fixture
+def fake_pigpio(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    pi = FakePi()
+    monkeypatch.setitem(sys.modules, "pigpio", SimpleNamespace(pi=lambda: pi))
+    return pi
+
+
+def test_pwm_uses_the_real_resolution(fake_pigpio):
+    from ledctl.hardware import PigpioDriver
+
+    PigpioDriver((17, 22, 24), pwm_freq=200)
+    assert fake_pigpio.freq == {17: 200, 22: 200, 24: 200}
+    assert fake_pigpio.range == {17: 1000, 22: 1000, 24: 1000}
+
+
+def test_dithering_makes_dark_levels_smooth(fake_pigpio):
+    from ledctl.hardware import PigpioDriver
+
+    driver = PigpioDriver((17,), pwm_freq=200)
+    fake_pigpio.duty.clear()
+    for _ in range(1000):
+        driver.write([0.0017])  # 1.7 steps: dark storm red after gamma
+    duties = [d for _, d in fake_pigpio.duty]
+    assert set(duties) == {1, 2}
+    assert sum(duties) / len(duties) == pytest.approx(1.7, abs=0.01)
+
+
+def test_dithering_never_leaves_range(fake_pigpio):
+    from ledctl.hardware import PigpioDriver
+
+    driver = PigpioDriver((17,), pwm_freq=200)
+    fake_pigpio.duty.clear()
+    for level in (0.0, 1.0, 0.0004, 0.9996, 1.0):
+        for _ in range(20):
+            driver.write([level])
+    assert all(0 <= d <= 1000 for _, d in fake_pigpio.duty)
+
+
 def test_strobe_rate_is_limited(client):
     assert client.post("/api/effect", json={"name": "strobe", "rate": 30}).status_code == 400
     assert client.post("/api/effect", json={"name": "strobe", "rate": "x"}).status_code == 400

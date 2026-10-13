@@ -89,7 +89,7 @@ def create_app(strip, favorites):
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    driver = create_driver(config.PINS, mock=config.MOCK)
+    driver = create_driver(config.PINS, mock=config.MOCK, pwm_freq=config.PWM_FREQ)
     strip = LEDStrip(driver, gamma=config.GAMMA, state_file=config.DATA_DIR / "state.json")
     strip.restore()
     app = create_app(strip, Favorites(config.DATA_DIR / "favorites.json"))

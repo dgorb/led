@@ -181,6 +181,7 @@ button.primary:active { transform: scale(0.98); }
 .effect-icon { flex: none; width: 44px; height: 44px; border-radius: 50%; }
 .candle-icon { background: radial-gradient(circle at 50% 60%, #ffd27a, #ff8a1f 55%, #7a2a05); }
 .strobe-icon { background: radial-gradient(circle, #fff, #cfd8ff 60%, #5a5f80); }
+.pigs-icon { background: linear-gradient(90deg, #ff2d2d 50%, #2d4dff 50%); }
 .effect-group { display: flex; flex-direction: column; gap: 8px; }
 .hint.warn { color: #ffb74d; font-size: 12px; }
 .effect-text { display: flex; flex-direction: column; }

@@ -61,7 +61,11 @@ def candle_loop():
 EFFECTS = {
     "candle": lambda mode: candle_loop(),
     "strobe": lambda mode: strobe_loop(mode["rate"]),
+    "pigs": lambda mode: pigs_loop(),
 }
+
+# Effects that flash hard enough that they should never resume on their own after a restart.
+FLASHING = ("strobe", "pigs")
 
 MIN_STROBE_HZ = 1
 MAX_STROBE_HZ = 10
@@ -75,6 +79,25 @@ def strobe_loop(rate, duty=0.2):
     while True:
         phase = ((time.monotonic() - start) * rate) % 1
         yield white if phase < duty else BLACK
+
+
+def pigs_loop():
+    """Double red flash, then double blue flash, repeating."""
+    red, blue = (255.0, 0.0, 0.0), (0.0, 0.0, 255.0)
+    pattern = []
+    for color in (red, blue):
+        pattern += [(color, 0.10), (BLACK, 0.07)] * 2
+    total = sum(d for _, d in pattern)
+    start = time.monotonic()
+    while True:
+        t = (time.monotonic() - start) % total
+        for color, duration in pattern:
+            if t < duration:
+                yield color
+                break
+            t -= duration
+        else:
+            yield BLACK
 
 
 def _strobe_rate(value):
@@ -248,8 +271,8 @@ class LEDStrip:
             self._state_file.parent.mkdir(parents=True, exist_ok=True)
             tmp = self._state_file.with_suffix(".tmp")
             mode = self._mode
-            if mode["type"] == "effect" and mode["name"] == "strobe":
-                mode = DEFAULT_MODE  # never resume a strobe by surprise after a restart
+            if mode["type"] == "effect" and mode["name"] in FLASHING:
+                mode = DEFAULT_MODE  # never resume flashing by surprise after a restart
             tmp.write_text(json.dumps({"on": self._on, "mode": mode}))
             os.replace(tmp, self._state_file)
         except OSError:

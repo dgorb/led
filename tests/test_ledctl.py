@@ -100,6 +100,20 @@ def test_strobe_flashes_and_is_not_restored(strip, tmp_path):
     other.close()
 
 
+def test_pigs_alternates_red_and_blue_and_is_not_restored(strip, tmp_path):
+    strip.set_effect("pigs")
+    seen = set()
+    for _ in range(60):
+        time.sleep(0.02)
+        seen.add(strip._current)
+    assert {(255.0, 0.0, 0.0), (0.0, 0.0, 255.0), (0.0, 0.0, 0.0)} <= seen
+    assert strip.state()["mode"] == {"type": "effect", "name": "pigs"}
+    other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
+    other.restore()
+    assert other.state()["mode"]["type"] == "static"
+    other.close()
+
+
 def test_strobe_rate_is_limited(client):
     assert client.post("/api/effect", json={"name": "strobe", "rate": 30}).status_code == 400
     assert client.post("/api/effect", json={"name": "strobe", "rate": "x"}).status_code == 400

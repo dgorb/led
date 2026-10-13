@@ -145,6 +145,54 @@ def test_cyberpunk_is_selectable_and_resumes(strip, tmp_path):
     other.close()
 
 
+def _simulate(monkeypatch, gen_factory, seconds):
+    from types import SimpleNamespace
+
+    clock = [0.0]
+
+    def fake_monotonic():
+        clock[0] += 1 / 60
+        return clock[0]
+
+    monkeypatch.setattr(effects_mod, "time", SimpleNamespace(monotonic=fake_monotonic, sleep=time.sleep))
+    gen = gen_factory()
+    return [next(gen) for _ in range(int(seconds * 60))]
+
+
+def test_aurora_is_smooth_colorful_and_in_range(monkeypatch):
+    import random
+
+    frames = _simulate(monkeypatch, lambda: effects_mod.aurora_loop(random.Random(3)), 600)
+    assert all(0 <= c <= 255 for rgb in frames for c in rgb)
+    jumps = [max(abs(a - b) for a, b in zip(f1, f2)) for f1, f2 in zip(frames, frames[1:])]
+    assert max(jumps) < 3  # no sudden changes
+    greens = [g for _, g, _ in frames]
+    blues = [b for _, _, b in frames]
+    assert max(greens) - min(greens) > 50 and max(blues) - min(blues) > 100  # it really drifts
+    assert min(sum(f) for f in frames) > 100  # never goes dark
+
+
+def test_thunderstorm_is_dim_with_rare_bright_flashes(monkeypatch):
+    import random
+
+    frames = _simulate(monkeypatch, lambda: effects_mod.thunderstorm_loop(random.Random(5)), 300)
+    assert all(0 <= c <= 255 for rgb in frames for c in rgb)
+    brightness = sorted(sum(f) for f in frames)
+    assert brightness[len(brightness) // 2] < 180  # normally dim
+    assert brightness[-1] > 450  # lightning is bright
+    bright = sum(1 for b in brightness if b > 300)
+    assert 0 < bright < len(frames) * 0.1  # but rare
+
+
+def test_new_effects_selectable_and_resume(strip, tmp_path):
+    for name in ("aurora", "thunderstorm"):
+        strip.set_effect(name)
+        other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
+        other.restore()
+        assert other.state()["mode"] == {"type": "effect", "name": name}
+        other.close()
+
+
 def test_strobe_rate_is_limited(client):
     assert client.post("/api/effect", json={"name": "strobe", "rate": 30}).status_code == 400
     assert client.post("/api/effect", json={"name": "strobe", "rate": "x"}).status_code == 400

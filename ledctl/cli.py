@@ -42,7 +42,7 @@ def main():
     fade.add_argument("--period", type=float, default=4)
     sub.add_parser("rainbow").add_argument("--period", type=float, default=20)
     effect = sub.add_parser("effect")
-    effect.add_argument("name", help="candle, strobe, pigs or cyberpunk")
+    effect.add_argument("name", help="candle, strobe, pigs, cyberpunk, aurora or thunderstorm")
     effect.add_argument("--rate", type=float, help="strobe flashes per second (1-10)")
 
     args = parser.parse_args()

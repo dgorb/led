@@ -183,6 +183,8 @@ button.primary:active { transform: scale(0.98); }
 .strobe-icon { background: radial-gradient(circle, #fff, #cfd8ff 60%, #5a5f80); }
 .pigs-icon { background: linear-gradient(90deg, #ff2d2d 50%, #2d4dff 50%); }
 .cyberpunk-icon { background: linear-gradient(135deg, #ff00aa, #8c28ff 50%, #00e6ff); }
+.aurora-icon { background: linear-gradient(160deg, #1eff6e, #00dcbe 40%, #2878ff 70%, #963cff); }
+.thunderstorm-icon { background: radial-gradient(circle at 60% 35%, #e6ecff, #3a4a8a 35%, #121a38); }
 .effect-group { display: flex; flex-direction: column; gap: 8px; }
 .effect-controls { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
 .effect-controls[hidden] { display: none; }

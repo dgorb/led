@@ -19,6 +19,11 @@ DEFAULT_STROBE_HZ = 4
 
 NEON = ((255.0, 0.0, 170.0), (0.0, 230.0, 255.0), (140.0, 40.0, 255.0))
 
+AURORA = ((30.0, 255.0, 110.0), (0.0, 220.0, 190.0), (40.0, 120.0, 255.0), (150.0, 60.0, 255.0))
+
+STORM_BASE = (25.0, 35.0, 75.0)
+STORM_FLASH = (215.0, 225.0, 255.0)
+
 
 def transition(a, b, duration):
     start = time.monotonic()
@@ -102,6 +107,51 @@ def cyberpunk_loop(rng=None):
         yield segments[0][1] if segments else base
 
 
+def aurora_loop(rng=None):
+    """Slow northern lights: drifts along green, teal, blue and purple.
+
+    Position and brightness each come from a few sine waves with unrelated
+    periods, so the pattern takes ages to repeat and never looks cyclic.
+    """
+    rng = rng or random.Random()
+    p = [rng.uniform(0, math.tau) for _ in range(4)]
+    start = time.monotonic()
+    last = len(AURORA) - 1
+    while True:
+        t = time.monotonic() - start
+        pos = 0.5 + 0.5 * (0.6 * math.sin(t * 0.11 + p[0]) + 0.4 * math.sin(t * 0.047 + p[1]))
+        glow = 0.85 + 0.15 * (0.6 * math.sin(t * 0.31 + p[2]) + 0.4 * math.sin(t * 0.13 + p[3]))
+        x = min(max(pos, 0.0), 1.0) * last
+        i = min(int(x), last - 1)
+        color = lerp(AURORA[i], AURORA[i + 1], x - i)
+        yield tuple(c * glow for c in color)
+
+
+def thunderstorm_loop(rng=None):
+    """Dim stormy blue-grey with the occasional lightning strike.
+
+    A strike is one to three quick flashes that each fade out, so the sky
+    flickers and then settles back to the base color.
+    """
+    rng = rng or random.Random()
+    start = time.monotonic()
+    next_strike = start + rng.uniform(2, 6)
+    flashes = []  # (start_time, peak, decay_seconds)
+    while True:
+        now = time.monotonic()
+        if now >= next_strike:
+            t = now
+            for _ in range(rng.choice((1, 1, 2, 3))):
+                flashes.append((t, rng.uniform(0.6, 1.0), rng.uniform(0.08, 0.25)))
+                t += rng.uniform(0.06, 0.2)
+            next_strike = t + rng.uniform(3, 12)
+        flashes = [f for f in flashes if now - f[0] < f[2] * 6]
+        level = max((peak * math.exp(-(now - t0) / decay) for t0, peak, decay in flashes if now >= t0), default=0.0)
+        breathe = 0.9 + 0.1 * math.sin((now - start) * 0.9)
+        base = tuple(c * breathe for c in STORM_BASE)
+        yield lerp(base, STORM_FLASH, min(level, 1.0))
+
+
 def pigs_loop():
     """Double red flash, then double blue flash, repeating."""
     red, blue = (255.0, 0.0, 0.0), (0.0, 0.0, 255.0)
@@ -154,6 +204,8 @@ EFFECTS = {
     "strobe": lambda mode: strobe_loop(mode["rate"]),
     "pigs": lambda mode: pigs_loop(),
     "cyberpunk": lambda mode: cyberpunk_loop(),
+    "aurora": lambda mode: aurora_loop(),
+    "thunderstorm": lambda mode: thunderstorm_loop(),
 }
 
 # Effects that flash hard enough that they should never resume on their own after a restart.

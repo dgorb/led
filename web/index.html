@@ -78,16 +78,16 @@
           <span class="effect-icon strobe-icon" aria-hidden="true"></span>
           <span class="effect-text"><strong>Strobe</strong><small>Fast white flashes</small></span>
         </button>
-        <label class="slider-label">Speed <span id="strobe-rate-val"></span></label>
-        <input type="range" id="strobe-rate" min="1" max="10" value="4">
-        <p class="hint warn">Warning: flashing lights can trigger seizures in people with photosensitive epilepsy.</p>
+        <div class="effect-controls" id="strobe-controls" hidden>
+          <label class="slider-label">Speed <span id="strobe-rate-val"></span></label>
+          <input type="range" id="strobe-rate" min="1" max="10" value="4">
+        </div>
       </div>
       <div class="effect-group">
         <button class="effect" data-effect="pigs">
           <span class="effect-icon pigs-icon" aria-hidden="true"></span>
           <span class="effect-text"><strong>Pigs</strong><small>Alternating red and blue flashes</small></span>
         </button>
-        <p class="hint warn">Warning: flashing lights can trigger seizures in people with photosensitive epilepsy.</p>
       </div>
     </section>
 

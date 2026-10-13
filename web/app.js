@@ -239,10 +239,13 @@
   });
   showStrobeRate();
 
-  const markEffect = (mode) =>
+  const markEffect = (mode) => {
     document.querySelectorAll(".effect").forEach((b) =>
       b.classList.toggle("active", mode.type === "effect" && mode.name === b.dataset.effect)
     );
+    // Show each effect's extra controls only while that effect is running.
+    $("strobe-controls").hidden = !(mode.type === "effect" && mode.name === "strobe");
+  };
 
   // ---- power ---------------------------------------------------------
 

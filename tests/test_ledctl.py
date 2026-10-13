@@ -86,6 +86,26 @@ def test_effect_api_validation(client):
     assert client.post("/api/effect", json={"name": "candle"}).get_json()["mode"]["name"] == "candle"
 
 
+def test_strobe_flashes_and_is_not_restored(strip, tmp_path):
+    strip.set_effect("strobe", 10)
+    seen = set()
+    for _ in range(40):
+        time.sleep(0.02)
+        seen.add(strip._current)
+    assert (255.0, 255.0, 255.0) in seen and (0.0, 0.0, 0.0) in seen
+    assert strip.state()["mode"] == {"type": "effect", "name": "strobe", "rate": 10.0}
+    other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
+    other.restore()
+    assert other.state()["mode"]["type"] == "static"
+    other.close()
+
+
+def test_strobe_rate_is_limited(client):
+    assert client.post("/api/effect", json={"name": "strobe", "rate": 30}).status_code == 400
+    assert client.post("/api/effect", json={"name": "strobe", "rate": "x"}).status_code == 400
+    assert client.post("/api/effect", json={"name": "strobe"}).get_json()["mode"]["rate"] == 4
+
+
 def test_fade_same_colors_does_not_crash(strip):
     strip.set_fade("#123456", "#123456", 1)
     time.sleep(0.1)

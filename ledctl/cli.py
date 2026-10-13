@@ -41,7 +41,9 @@ def main():
     fade.add_argument("end")
     fade.add_argument("--period", type=float, default=4)
     sub.add_parser("rainbow").add_argument("--period", type=float, default=20)
-    sub.add_parser("effect").add_argument("name", help="e.g. candle")
+    effect = sub.add_parser("effect")
+    effect.add_argument("name", help="candle or strobe")
+    effect.add_argument("--rate", type=float, help="strobe flashes per second (1-10)")
 
     args = parser.parse_args()
     url = args.url.rstrip("/")
@@ -54,7 +56,7 @@ def main():
     elif args.cmd == "fade":
         result = call(url, "POST", "/api/fade", {"start": args.start, "end": args.end, "period": args.period})
     elif args.cmd == "effect":
-        result = call(url, "POST", "/api/effect", {"name": args.name})
+        result = call(url, "POST", "/api/effect", {"name": args.name, "rate": args.rate})
     else:
         result = call(url, "POST", "/api/rainbow", {"period": args.period})
     print(json.dumps(result))

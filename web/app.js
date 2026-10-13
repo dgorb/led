@@ -220,10 +220,24 @@
 
   document.querySelectorAll(".effect").forEach((btn) =>
     btn.addEventListener("click", async () => {
-      const state = await api("POST", "/effect", { name: btn.dataset.effect });
+      const name = btn.dataset.effect;
+      const body = { name };
+      if (name === "strobe") body.rate = Number($("strobe-rate").value);
+      const state = await api("POST", "/effect", body);
       if (state) { on = state.on; renderPower(); markEffect(state.mode); }
     })
   );
+
+  const strobeRate = $("strobe-rate");
+  const showStrobeRate = () => ($("strobe-rate-val").textContent = strobeRate.value + "/s");
+  strobeRate.addEventListener("input", showStrobeRate);
+  strobeRate.addEventListener("change", () => {
+    // Apply a new speed right away if the strobe is already running.
+    if (document.querySelector('.effect[data-effect="strobe"]').classList.contains("active")) {
+      document.querySelector('.effect[data-effect="strobe"]').click();
+    }
+  });
+  showStrobeRate();
 
   const markEffect = (mode) =>
     document.querySelectorAll(".effect").forEach((b) =>
@@ -327,6 +341,9 @@
           $("fade-b").value = mode.colors[1];
           $("fade-period").value = mode.period;
           $("fade-period").dispatchEvent(new Event("input"));
+        } else if (mode.type === "effect" && mode.rate) {
+          strobeRate.value = mode.rate;
+          showStrobeRate();
         } else if (mode.type === "rainbow") {
           $("rainbow-period").value = mode.period;
           $("rainbow-period").dispatchEvent(new Event("input"));

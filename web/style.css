@@ -180,6 +180,9 @@ button.primary:active { transform: scale(0.98); }
 .effect.active { border-color: rgba(255, 170, 80, 0.7); background: rgba(255, 150, 40, 0.12); box-shadow: 0 0 24px rgba(255, 140, 30, 0.2); }
 .effect-icon { flex: none; width: 44px; height: 44px; border-radius: 50%; }
 .candle-icon { background: radial-gradient(circle at 50% 60%, #ffd27a, #ff8a1f 55%, #7a2a05); }
+.strobe-icon { background: radial-gradient(circle, #fff, #cfd8ff 60%, #5a5f80); }
+.effect-group { display: flex; flex-direction: column; gap: 8px; }
+.hint.warn { color: #ffb74d; font-size: 12px; }
 .effect-text { display: flex; flex-direction: column; }
 .effect-text small { color: var(--muted); font-size: 13px; }
 

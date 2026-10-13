@@ -58,7 +58,33 @@ def candle_loop():
         yield lerp(dim, bright, level)
 
 
-EFFECTS = {"candle": candle_loop}
+EFFECTS = {
+    "candle": lambda mode: candle_loop(),
+    "strobe": lambda mode: strobe_loop(mode["rate"]),
+}
+
+MIN_STROBE_HZ = 1
+MAX_STROBE_HZ = 10
+DEFAULT_STROBE_HZ = 4
+
+
+def strobe_loop(rate, duty=0.2):
+    """Short white flashes, `rate` per second."""
+    white = (255.0, 255.0, 255.0)
+    start = time.monotonic()
+    while True:
+        phase = ((time.monotonic() - start) * rate) % 1
+        yield white if phase < duty else BLACK
+
+
+def _strobe_rate(value):
+    try:
+        rate = float(value)
+    except (TypeError, ValueError):
+        raise ValueError("rate must be a number")
+    if not MIN_STROBE_HZ <= rate <= MAX_STROBE_HZ:
+        raise ValueError(f"rate must be between {MIN_STROBE_HZ} and {MAX_STROBE_HZ} flashes per second")
+    return rate
 
 
 def rainbow_loop(period):
@@ -144,10 +170,13 @@ class LEDStrip:
         }
         self._set_mode(mode)
 
-    def set_effect(self, name):
+    def set_effect(self, name, rate=None):
         if name not in EFFECTS:
             raise ValueError(f"unknown effect {name!r}, expected one of: {', '.join(EFFECTS)}")
-        self._set_mode({"type": "effect", "name": name})
+        mode = {"type": "effect", "name": name}
+        if name == "strobe":
+            mode["rate"] = _strobe_rate(DEFAULT_STROBE_HZ if rate is None else rate)
+        self._set_mode(mode)
 
     def set_rainbow(self, period):
         self._set_mode({"type": "rainbow", "period": _period(period)})
@@ -179,7 +208,7 @@ class LEDStrip:
             a, b = (parse_hex(c) for c in mode["colors"])
             self._run(self._chain(transition(self._current, a, 0.5), fade_loop(a, b, mode["period"])))
         elif mode["type"] == "effect":
-            self._run(EFFECTS[mode["name"]]())
+            self._run(EFFECTS[mode["name"]](mode))
         elif mode["type"] == "rainbow":
             self._run(rainbow_loop(mode["period"]))
 
@@ -218,7 +247,10 @@ class LEDStrip:
         try:
             self._state_file.parent.mkdir(parents=True, exist_ok=True)
             tmp = self._state_file.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"on": self._on, "mode": self._mode}))
+            mode = self._mode
+            if mode["type"] == "effect" and mode["name"] == "strobe":
+                mode = DEFAULT_MODE  # never resume a strobe by surprise after a restart
+            tmp.write_text(json.dumps({"on": self._on, "mode": mode}))
             os.replace(tmp, self._state_file)
         except OSError:
             log.exception("Could not save state")

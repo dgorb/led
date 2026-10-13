@@ -73,6 +73,15 @@
         <span class="effect-icon candle-icon" aria-hidden="true"></span>
         <span class="effect-text"><strong>Candle</strong><small>Warm, softly flickering flame</small></span>
       </button>
+      <div class="effect-group">
+        <button class="effect" data-effect="strobe">
+          <span class="effect-icon strobe-icon" aria-hidden="true"></span>
+          <span class="effect-text"><strong>Strobe</strong><small>Fast white flashes</small></span>
+        </button>
+        <label class="slider-label">Speed <span id="strobe-rate-val"></span></label>
+        <input type="range" id="strobe-rate" min="1" max="10" value="4">
+        <p class="hint warn">Warning: flashing lights can trigger seizures in people with photosensitive epilepsy.</p>
+      </div>
     </section>
 
     <section class="card">

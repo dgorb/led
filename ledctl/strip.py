@@ -42,19 +42,19 @@ def candle_loop():
 
     Dimmer also means redder, like a real flame.
     """
-    dim, bright = (80.0, 20.0, 2.0), (255.0, 150.0, 40.0)
+    dim, bright = (175.0, 62.0, 8.0), (255.0, 140.0, 35.0)
     rng = random.Random()
-    level = target = 0.85
+    level = target = 0.8
     next_change = 0.0
     last = time.monotonic()
     while True:
         now = time.monotonic()
         dt, last = now - last, now
         if now >= next_change:
-            low = 0.35 if rng.random() < 0.2 else 0.7
+            low = 0.45 if rng.random() < 0.1 else 0.65
             target = rng.uniform(low, 1.0)
-            next_change = now + rng.uniform(0.05, 0.3)
-        level += (target - level) * min(1.0, dt * 10)
+            next_change = now + rng.uniform(0.15, 0.6)
+        level += (target - level) * min(1.0, dt * 4)
         yield lerp(dim, bright, level)
 
 

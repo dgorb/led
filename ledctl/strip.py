@@ -24,7 +24,7 @@ DEFAULT_MODE = {"type": "static", "color": "#ff9329"}
 class LEDStrip:
     """Owns the hardware. All changes run through one animation thread."""
 
-    def __init__(self, driver, gamma=2.2, state_file=None):
+    def __init__(self, driver, gamma=2.8, state_file=None):
         self._driver = driver
         self._gamma = gamma
         self._state_file = state_file

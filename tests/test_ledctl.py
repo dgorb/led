@@ -108,7 +108,7 @@ def test_pigs_alternates_red_and_blue_and_is_not_restored(strip, tmp_path):
         time.sleep(0.02)
         seen.add(strip._current)
     assert {(255.0, 0.0, 0.0), (0.0, 0.0, 255.0), (0.0, 0.0, 0.0)} <= seen
-    assert strip.state()["mode"] == {"type": "effect", "name": "pigs"}
+    assert strip.state()["mode"] == {"type": "effect", "name": "pigs", "norway": False}
     other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
     other.restore()
     assert other.state()["mode"]["type"] == "static"
@@ -135,6 +135,23 @@ def test_cyberpunk_glitches_around_a_neon_base(strip, monkeypatch):
     assert max(jumps) > 100  # glitches are abrupt
     calm = sum(1 for j in jumps if j < 5)
     assert calm > len(jumps) * 0.7  # but most of the time it is steady
+
+
+def test_pigs_norway_mode_is_blue_only(monkeypatch):
+    def colors(norway):
+        frames = _simulate(monkeypatch, lambda: effects_mod.pigs_loop(norway=norway), 5)
+        return set(frames)
+
+    assert (255.0, 0.0, 0.0) in colors(False)
+    norway = colors(True)
+    assert norway == {(0.0, 0.0, 255.0), (0.0, 0.0, 0.0)}
+
+
+def test_pigs_norway_option_through_the_api(client):
+    mode = client.post("/api/effect", json={"name": "pigs", "norway": True}).get_json()["mode"]
+    assert mode == {"type": "effect", "name": "pigs", "norway": True}
+    assert client.post("/api/effect", json={"name": "pigs"}).get_json()["mode"]["norway"] is False
+    assert client.post("/api/effect", json={"name": "pigs", "norway": 1}).status_code == 400
 
 
 def test_cyberpunk_without_glitches_never_jumps(monkeypatch):

@@ -153,11 +153,15 @@ def thunderstorm_loop(rng=None):
         yield lerp(base, STORM_FLASH, min(level, 1.0))
 
 
-def pigs_loop():
-    """Double red flash, then double blue flash, repeating."""
+def pigs_loop(norway=False):
+    """Double red flash, then double blue flash, repeating.
+
+    In Norway mode only the blue flashes remain; the red half of the cycle is dark,
+    so the rhythm stays the same.
+    """
     red, blue = (255.0, 0.0, 0.0), (0.0, 0.0, 255.0)
     pattern = []
-    for color in (red, blue):
+    for color in (BLACK if norway else red, blue):
         pattern += [(color, 0.10), (BLACK, 0.07)] * 2
     total = sum(d for _, d in pattern)
     start = time.monotonic()
@@ -206,14 +210,14 @@ EFFECTS = {
     "thunderstorm": lambda mode: thunderstorm_loop(),
     "cyberpunk": lambda mode: cyberpunk_loop(glitch=mode.get("glitch", True)),
     "strobe": lambda mode: strobe_loop(mode["rate"]),
-    "pigs": lambda mode: pigs_loop(),
+    "pigs": lambda mode: pigs_loop(norway=mode.get("norway", False)),
 }
 
 # Effects that flash hard enough that they should never resume on their own after a restart.
 FLASHING = ("strobe", "pigs")
 
 
-def build_effect_mode(name, rate=None, glitch=None):
+def build_effect_mode(name, rate=None, glitch=None, norway=None):
     """Validate a request for a named effect and return the mode dict to store."""
     if name not in EFFECTS:
         raise ValueError(f"unknown effect {name!r}, expected one of: {', '.join(EFFECTS)}")
@@ -224,4 +228,8 @@ def build_effect_mode(name, rate=None, glitch=None):
         if glitch is not None and not isinstance(glitch, bool):
             raise ValueError("glitch must be true or false")
         mode["glitch"] = True if glitch is None else glitch
+    if name == "pigs":
+        if norway is not None and not isinstance(norway, bool):
+            raise ValueError("norway must be true or false")
+        mode["norway"] = bool(norway)
     return mode

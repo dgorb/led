@@ -224,6 +224,7 @@
       const body = { name };
       if (name === "strobe") body.rate = Number($("strobe-rate").value);
       if (name === "cyberpunk") body.glitch = $("cyberpunk-glitch").checked;
+      if (name === "pigs") body.norway = $("pigs-norway").getAttribute("aria-pressed") === "true";
       const state = await api("POST", "/effect", body);
       if (state) { on = state.on; renderPower(); markEffect(state.mode); }
     })
@@ -240,6 +241,14 @@
   });
   showStrobeRate();
 
+  $("pigs-norway").addEventListener("click", (e) => {
+    const btn = e.currentTarget;
+    btn.setAttribute("aria-pressed", String(btn.getAttribute("aria-pressed") !== "true"));
+    // Apply right away if pigs is already running.
+    const card = document.querySelector('.effect[data-effect="pigs"]');
+    if (card.classList.contains("active")) card.click();
+  });
+
   $("cyberpunk-glitch").addEventListener("change", () => {
     // Apply right away if cyberpunk is already running.
     const card = document.querySelector('.effect[data-effect="cyberpunk"]');
@@ -253,6 +262,7 @@
     // Show each effect's extra controls only while that effect is running.
     $("strobe-controls").hidden = !(mode.type === "effect" && mode.name === "strobe");
     $("cyberpunk-controls").hidden = !(mode.type === "effect" && mode.name === "cyberpunk");
+    $("pigs-controls").hidden = !(mode.type === "effect" && mode.name === "pigs");
   };
 
   // ---- power ---------------------------------------------------------
@@ -357,6 +367,8 @@
           showStrobeRate();
         } else if (mode.type === "effect" && mode.name === "cyberpunk") {
           $("cyberpunk-glitch").checked = mode.glitch !== false;
+        } else if (mode.type === "effect" && mode.name === "pigs") {
+          $("pigs-norway").setAttribute("aria-pressed", String(Boolean(mode.norway)));
         } else if (mode.type === "rainbow") {
           $("rainbow-period").value = mode.period;
           $("rainbow-period").dispatchEvent(new Event("input"));

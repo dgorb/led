@@ -44,6 +44,7 @@ def main():
     effect = sub.add_parser("effect")
     effect.add_argument("name", help="candle, strobe, pigs, cyberpunk, aurora or thunderstorm")
     effect.add_argument("--rate", type=float, help="strobe flashes per second (1-10)")
+    effect.add_argument("--norway", action="store_true", help="pigs with blue lights only")
     effect.add_argument("--no-glitch", action="store_true", help="cyberpunk without the random glitches")
 
     args = parser.parse_args()
@@ -57,7 +58,7 @@ def main():
     elif args.cmd == "fade":
         result = call(url, "POST", "/api/fade", {"start": args.start, "end": args.end, "period": args.period})
     elif args.cmd == "effect":
-        result = call(url, "POST", "/api/effect", {"name": args.name, "rate": args.rate, "glitch": False if args.no_glitch else None})
+        result = call(url, "POST", "/api/effect", {"name": args.name, "rate": args.rate, "glitch": False if args.no_glitch else None, "norway": True if args.norway else None})
     else:
         result = call(url, "POST", "/api/rainbow", {"period": args.period})
     print(json.dumps(result))

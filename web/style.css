@@ -188,6 +188,12 @@ button.primary:active { transform: scale(0.98); }
 .effect-group { display: flex; flex-direction: column; gap: 8px; }
 .effect-controls { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
 .effect-controls[hidden] { display: none; }
+.flag-toggle {
+  align-self: flex-start; width: 52px; height: 40px; border-radius: 12px; font-size: 24px; line-height: 1;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+  filter: grayscale(1); opacity: 0.55; transition: all 0.2s;
+}
+.flag-toggle[aria-pressed="true"] { filter: none; opacity: 1; border-color: rgba(120, 150, 255, 0.8); background: rgba(60, 90, 255, 0.18); }
 .switch { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; cursor: pointer; }
 .switch input { position: absolute; opacity: 0; pointer-events: none; }
 .switch i { position: relative; width: 46px; height: 28px; border-radius: 14px; background: rgba(255, 255, 255, 0.15); transition: background 0.2s; }

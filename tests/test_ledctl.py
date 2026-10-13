@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from ledctl import effects as effects_mod
 from ledctl import strip as strip_mod
 from ledctl.app import create_app
 from ledctl.colors import normalize_hex, parse_hex, to_hex
@@ -124,9 +125,9 @@ def test_cyberpunk_glitches_around_a_neon_base(strip, monkeypatch):
         clock[0] += 1 / 60
         return clock[0]
 
-    monkeypatch.setattr(strip_mod, "time", SimpleNamespace(monotonic=fake_monotonic, sleep=time.sleep))
+    monkeypatch.setattr(effects_mod, "time", SimpleNamespace(monotonic=fake_monotonic, sleep=time.sleep))
     frames = []
-    gen = strip_mod.cyberpunk_loop(random.Random(1))
+    gen = effects_mod.cyberpunk_loop(random.Random(1))
     for _ in range(60 * 30):  # 30 simulated seconds
         frames.append(next(gen))
     assert all(0 <= c <= 255 for rgb in frames for c in rgb)

@@ -1,6 +1,8 @@
 import colorsys
 import re
 
+BLACK = (0.0, 0.0, 0.0)
+
 _HEX = re.compile(r"^#?([0-9a-fA-F]{6})$")
 
 

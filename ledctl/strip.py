@@ -1,167 +1,24 @@
 import json
 import logging
-import math
 import os
-import random
 import threading
-import time
 
-from .colors import hsv_to_rgb, lerp, normalize_hex, parse_hex, to_hex
+from .colors import BLACK, normalize_hex, parse_hex, to_hex
+from .effects import (
+    EFFECTS,
+    FLASHING,
+    build_effect_mode,
+    fade_loop,
+    parse_period,
+    rainbow_loop,
+    transition,
+)
 
 log = logging.getLogger(__name__)
 
 FRAME_TIME = 1 / 60
 FADE_TIME = 1.2
-MIN_PERIOD = 0.5
-MAX_PERIOD = 600
-BLACK = (0.0, 0.0, 0.0)
 DEFAULT_MODE = {"type": "static", "color": "#ff9329"}
-
-
-def transition(a, b, duration):
-    start = time.monotonic()
-    while True:
-        k = (time.monotonic() - start) / duration
-        if k >= 1:
-            yield b
-            return
-        yield lerp(a, b, k)
-
-
-def fade_loop(a, b, period):
-    """Ease back and forth between a and b; `period` is seconds for one way."""
-    start = time.monotonic()
-    while True:
-        phase = ((time.monotonic() - start) / period) % 2
-        k = phase if phase <= 1 else 2 - phase
-        yield lerp(a, b, (1 - math.cos(math.pi * k)) / 2)
-
-
-def candle_loop():
-    """Warm flame: smoothed random brightness with occasional deeper dips.
-
-    Dimmer also means redder, like a real flame.
-    """
-    dim, bright = (175.0, 62.0, 8.0), (255.0, 140.0, 35.0)
-    rng = random.Random()
-    level = target = 0.8
-    next_change = 0.0
-    last = time.monotonic()
-    while True:
-        now = time.monotonic()
-        dt, last = now - last, now
-        if now >= next_change:
-            low = 0.45 if rng.random() < 0.1 else 0.65
-            target = rng.uniform(low, 1.0)
-            next_change = now + rng.uniform(0.15, 0.6)
-        level += (target - level) * min(1.0, dt * 4)
-        yield lerp(dim, bright, level)
-
-
-EFFECTS = {
-    "candle": lambda mode: candle_loop(),
-    "strobe": lambda mode: strobe_loop(mode["rate"]),
-    "pigs": lambda mode: pigs_loop(),
-    "cyberpunk": lambda mode: cyberpunk_loop(),
-}
-
-# Effects that flash hard enough that they should never resume on their own after a restart.
-FLASHING = ("strobe", "pigs")
-
-MIN_STROBE_HZ = 1
-MAX_STROBE_HZ = 10
-DEFAULT_STROBE_HZ = 4
-
-
-def strobe_loop(rate, duty=0.2):
-    """Short white flashes, `rate` per second."""
-    white = (255.0, 255.0, 255.0)
-    start = time.monotonic()
-    while True:
-        phase = ((time.monotonic() - start) * rate) % 1
-        yield white if phase < duty else BLACK
-
-
-NEON = ((255.0, 0.0, 170.0), (0.0, 230.0, 255.0), (140.0, 40.0, 255.0))
-
-
-def cyberpunk_loop(rng=None):
-    """Neon base that drifts between magenta, cyan and purple, with random glitches.
-
-    A glitch is a burst of a few very short frames: a different neon color,
-    darkness, or a white flash, then back to the base color.
-    """
-    rng = rng or random.Random()
-    now = time.monotonic()
-    src, dst = rng.sample(NEON, 2)
-    fade_start, fade_len = now, rng.uniform(4, 9)
-    next_glitch = now + rng.uniform(0.5, 2.5)
-    segments = []  # (until, color) for the glitch burst in progress
-    while True:
-        now = time.monotonic()
-        if now >= fade_start + fade_len:
-            src, dst = dst, rng.choice([c for c in NEON if c != dst])
-            fade_start, fade_len = now, rng.uniform(4, 9)
-        k = min(1.0, (now - fade_start) / fade_len)
-        base = lerp(src, dst, k * k * (3 - 2 * k))
-
-        while segments and now >= segments[0][0]:
-            segments.pop(0)
-        if not segments and now >= next_glitch:
-            t = now
-            for _ in range(rng.randint(2, 6)):
-                t += rng.uniform(0.02, 0.09)
-                segments.append((t, rng.choice((BLACK, (255.0, 255.0, 255.0), rng.choice(NEON)))))
-                t += rng.uniform(0.02, 0.06)
-                segments.append((t, base))
-            next_glitch = t + rng.uniform(0.6, 3.0)
-        yield segments[0][1] if segments else base
-
-
-def pigs_loop():
-    """Double red flash, then double blue flash, repeating."""
-    red, blue = (255.0, 0.0, 0.0), (0.0, 0.0, 255.0)
-    pattern = []
-    for color in (red, blue):
-        pattern += [(color, 0.10), (BLACK, 0.07)] * 2
-    total = sum(d for _, d in pattern)
-    start = time.monotonic()
-    while True:
-        t = (time.monotonic() - start) % total
-        for color, duration in pattern:
-            if t < duration:
-                yield color
-                break
-            t -= duration
-        else:
-            yield BLACK
-
-
-def _strobe_rate(value):
-    try:
-        rate = float(value)
-    except (TypeError, ValueError):
-        raise ValueError("rate must be a number")
-    if not MIN_STROBE_HZ <= rate <= MAX_STROBE_HZ:
-        raise ValueError(f"rate must be between {MIN_STROBE_HZ} and {MAX_STROBE_HZ} flashes per second")
-    return rate
-
-
-def rainbow_loop(period):
-    """Cycle through all hues; `period` is seconds per full cycle."""
-    start = time.monotonic()
-    while True:
-        yield hsv_to_rgb((time.monotonic() - start) / period * 360, 1, 1)
-
-
-def _period(value):
-    try:
-        period = float(value)
-    except (TypeError, ValueError):
-        raise ValueError("period must be a number")
-    if not MIN_PERIOD <= period <= MAX_PERIOD:
-        raise ValueError(f"period must be between {MIN_PERIOD} and {MAX_PERIOD} seconds")
-    return period
 
 
 class LEDStrip:
@@ -226,20 +83,15 @@ class LEDStrip:
         mode = {
             "type": "fade",
             "colors": [normalize_hex(start), normalize_hex(end)],
-            "period": _period(period),
+            "period": parse_period(period),
         }
         self._set_mode(mode)
 
     def set_effect(self, name, rate=None):
-        if name not in EFFECTS:
-            raise ValueError(f"unknown effect {name!r}, expected one of: {', '.join(EFFECTS)}")
-        mode = {"type": "effect", "name": name}
-        if name == "strobe":
-            mode["rate"] = _strobe_rate(DEFAULT_STROBE_HZ if rate is None else rate)
-        self._set_mode(mode)
+        self._set_mode(build_effect_mode(name, rate))
 
     def set_rainbow(self, period):
-        self._set_mode({"type": "rainbow", "period": _period(period)})
+        self._set_mode({"type": "rainbow", "period": parse_period(period)})
 
     def close(self):
         with self._lock:

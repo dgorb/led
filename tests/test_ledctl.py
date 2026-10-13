@@ -249,6 +249,17 @@ def test_aurora_is_smooth_colorful_and_in_range(monkeypatch):
     assert min(sum(f) for f in frames) > 100  # never goes dark
 
 
+def test_lava_lamp_drifts_smoothly_and_stays_lit(monkeypatch):
+    import random
+
+    frames = _simulate(monkeypatch, lambda: effects_mod.lava_lamp_loop(random.Random(2)), 300)
+    assert all(0 <= c <= 255 for rgb in frames for c in rgb)
+    jumps = [max(abs(a - b) for a, b in zip(f1, f2)) for f1, f2 in zip(frames, frames[1:])]
+    assert max(jumps) < 2
+    assert max(r for r, _, _ in frames) - min(r for r, _, _ in frames) > 20 or max(b for _, _, b in frames) - min(b for _, _, b in frames) > 50
+    assert min(sum(f) for f in frames) > 150
+
+
 def test_thunderstorm_is_dim_with_rare_bright_flashes(monkeypatch):
     import random
 
@@ -262,7 +273,7 @@ def test_thunderstorm_is_dim_with_rare_bright_flashes(monkeypatch):
 
 
 def test_new_effects_selectable_and_resume(strip, tmp_path):
-    for name in ("aurora", "thunderstorm", "backrooms"):
+    for name in ("aurora", "lavalamp", "thunderstorm", "backrooms"):
         strip.set_effect(name)
         other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
         other.restore()

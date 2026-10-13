@@ -98,7 +98,7 @@ All bodies are JSON; every endpoint returns the new state `{on, mode, color}` or
 | POST   | `/api/power`              | `{"on": true}`                        |
 | POST   | `/api/fade`               | `{"start": "#..", "end": "#..", "period": 4}` (seconds one way) |
 | POST   | `/api/rainbow`            | `{"period": 20}` (seconds per cycle)  |
-| POST   | `/api/effect`             | `{"name": "candle"}`, `{"name": "pigs", "norway": false}`, `{"name": "cyberpunk", "glitch": true}`, `{"name": "aurora"}`, `{"name": "thunderstorm"}`, `{"name": "backrooms"}`, `{"name": "caramelldansen", "bpm": 165}` or `{"name": "strobe", "rate": 4}` (1-10 flashes/s) |
+| POST   | `/api/effect`             | `{"name": "candle"}`, `{"name": "pigs", "norway": false}`, `{"name": "cyberpunk", "glitch": true}`, `{"name": "aurora"}`, `{"name": "lavalamp"}`, `{"name": "thunderstorm"}`, `{"name": "backrooms"}`, `{"name": "caramelldansen", "bpm": 165}` or `{"name": "strobe", "rate": 4}` (1-10 flashes/s) |
 | GET    | `/api/favorites`          |                                       |
 | POST   | `/api/favorites`          | `{"color": "#rrggbb"}`                |
 | DELETE | `/api/favorites/<rrggbb>` |                                       |

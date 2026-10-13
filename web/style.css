@@ -184,6 +184,7 @@ button.primary:active { transform: scale(0.98); }
 .pigs-icon { background: linear-gradient(90deg, #ff2d2d 50%, #2d4dff 50%); }
 .cyberpunk-icon { background: linear-gradient(135deg, #ff00aa, #8c28ff 50%, #00e6ff); }
 .aurora-icon { background: linear-gradient(160deg, #1eff6e, #00dcbe 40%, #2878ff 70%, #963cff); }
+.lavalamp-icon { background: radial-gradient(circle at 30% 30%, #ff5a00, transparent 55%), radial-gradient(circle at 70% 70%, #961eff, transparent 60%), #ff2878; }
 .thunderstorm-icon { background: radial-gradient(circle at 60% 35%, #e6ecff, #3a4a8a 35%, #121a38); }
 .backrooms-icon { background: linear-gradient(90deg, #b8b860, #f0f0a8 50%, #b8b860); border-radius: 10px; height: 26px; margin: 9px 0; }
 .caramell-icon { background: conic-gradient(#ff6e00, #00aaff, #ff2896, #78ff3c, #ffdc00, #aa3cff, #ff6e00); }

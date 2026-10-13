@@ -25,6 +25,13 @@ NEON = ((255.0, 0.0, 170.0), (0.0, 230.0, 255.0), (140.0, 40.0, 255.0))
 
 AURORA = ((30.0, 255.0, 110.0), (0.0, 220.0, 190.0), (40.0, 120.0, 255.0), (150.0, 60.0, 255.0))
 
+LAVA = (
+    (255.0, 40.0, 120.0),   # magenta
+    (255.0, 90.0, 0.0),     # orange
+    (150.0, 30.0, 255.0),   # purple
+    (255.0, 20.0, 20.0),    # red
+)
+
 BACKROOMS = (235.0, 235.0, 150.0)
 
 CANDY = (
@@ -153,6 +160,23 @@ def aurora_loop(rng=None):
         i = min(int(x), last - 1)
         color = lerp(AURORA[i], AURORA[i + 1], x - i)
         yield tuple(c * glow for c in color)
+
+
+def lava_lamp_loop(rng=None):
+    """Slow blobs of warm color drifting past, mixed into one color.
+
+    Each blob has its own color and a strength that swells and fades on an
+    unrelated period (23-47 s), so the mix wanders and rarely repeats.
+    """
+    rng = rng or random.Random()
+    phases = [rng.uniform(0, math.tau) for _ in LAVA]
+    rates = [math.tau / p for p in (23.0, 31.0, 47.0, 37.0)]
+    start = time.monotonic()
+    while True:
+        t = time.monotonic() - start
+        weights = [0.05 + (0.5 + 0.5 * math.sin(t * r + p)) ** 2 for r, p in zip(rates, phases)]
+        total = sum(weights)
+        yield tuple(sum(w * c[i] for w, c in zip(weights, LAVA)) / total for i in range(3))
 
 
 def thunderstorm_loop(rng=None):
@@ -299,6 +323,7 @@ def parse_period(value):
 EFFECTS = {
     "candle": lambda mode: candle_loop(),
     "aurora": lambda mode: aurora_loop(),
+    "lavalamp": lambda mode: lava_lamp_loop(),
     "thunderstorm": lambda mode: thunderstorm_loop(),
     "cyberpunk": lambda mode: cyberpunk_loop(glitch=mode.get("glitch", True)),
     "backrooms": lambda mode: backrooms_loop(),

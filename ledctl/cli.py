@@ -42,7 +42,7 @@ def main():
     fade.add_argument("--period", type=float, default=4)
     sub.add_parser("rainbow").add_argument("--period", type=float, default=20)
     effect = sub.add_parser("effect")
-    effect.add_argument("name", help="candle, aurora, thunderstorm, cyberpunk, backrooms, caramelldansen, strobe or pigs")
+    effect.add_argument("name", help="candle, aurora, lavalamp, thunderstorm, cyberpunk, backrooms, caramelldansen, strobe or pigs")
     effect.add_argument("--rate", type=float, help="strobe flashes per second (1-10)")
     effect.add_argument("--bpm", type=float, help="caramelldansen tempo (60-240)")
     effect.add_argument("--norway", action="store_true", help="pigs with blue lights only")

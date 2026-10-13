@@ -21,6 +21,8 @@ NEON = ((255.0, 0.0, 170.0), (0.0, 230.0, 255.0), (140.0, 40.0, 255.0))
 
 AURORA = ((30.0, 255.0, 110.0), (0.0, 220.0, 190.0), (40.0, 120.0, 255.0), (150.0, 60.0, 255.0))
 
+BACKROOMS = (235.0, 235.0, 150.0)
+
 STORM_BASE = (25.0, 35.0, 75.0)
 STORM_FLASH = (215.0, 225.0, 255.0)
 
@@ -153,6 +155,45 @@ def thunderstorm_loop(rng=None):
         yield lerp(base, STORM_FLASH, min(level, 1.0))
 
 
+def backrooms_loop(rng=None):
+    """Harsh, sickly fluorescent light that never quite behaves.
+
+    A constant faint buzz, regular short stutters, and now and then the tube
+    dies for a moment and flickers back to life.
+    """
+    rng = rng or random.Random()
+    now = time.monotonic()
+    next_stutter = now + rng.uniform(2, 6)
+    next_dropout = now + rng.uniform(15, 40)
+    segments = []  # (until, brightness 0..1) for the flicker in progress
+    while True:
+        now = time.monotonic()
+        while segments and now >= segments[0][0]:
+            segments.pop(0)
+        if not segments:
+            if now >= next_dropout:
+                t = now + rng.uniform(0.15, 0.4)
+                segments.append((t, 0.04))
+                for _ in range(rng.randint(2, 4)):
+                    t += rng.uniform(0.03, 0.08)
+                    segments.append((t, rng.uniform(0.5, 0.9)))
+                    t += rng.uniform(0.02, 0.07)
+                    segments.append((t, rng.uniform(0.05, 0.3)))
+                next_dropout = t + rng.uniform(15, 45)
+                next_stutter = max(next_stutter, t + 2)
+            elif now >= next_stutter:
+                t = now
+                for _ in range(rng.randint(2, 5)):
+                    t += rng.uniform(0.02, 0.07)
+                    segments.append((t, rng.uniform(0.35, 0.65)))
+                    t += rng.uniform(0.03, 0.09)
+                    segments.append((t, 1.0))
+                next_stutter = t + rng.uniform(3, 10)
+        level = segments[0][1] if segments else 1.0
+        buzz = 1.0 - rng.uniform(0, 0.03)
+        yield tuple(c * level * buzz for c in BACKROOMS)
+
+
 def pigs_loop(norway=False):
     """Double red flash, then double blue flash, repeating.
 
@@ -209,6 +250,7 @@ EFFECTS = {
     "aurora": lambda mode: aurora_loop(),
     "thunderstorm": lambda mode: thunderstorm_loop(),
     "cyberpunk": lambda mode: cyberpunk_loop(glitch=mode.get("glitch", True)),
+    "backrooms": lambda mode: backrooms_loop(),
     "strobe": lambda mode: strobe_loop(mode["rate"]),
     "pigs": lambda mode: pigs_loop(norway=mode.get("norway", False)),
 }

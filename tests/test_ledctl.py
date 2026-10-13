@@ -154,6 +154,20 @@ def test_pigs_norway_option_through_the_api(client):
     assert client.post("/api/effect", json={"name": "pigs", "norway": 1}).status_code == 400
 
 
+def test_backrooms_is_a_buzzing_yellow_green_with_stutters(monkeypatch):
+    import random
+
+    frames = _simulate(monkeypatch, lambda: effects_mod.backrooms_loop(random.Random(2)), 300)
+    assert all(0 <= c <= 255 for rgb in frames for c in rgb)
+    assert all(r > b and g > b and abs(r - g) < 1 for r, g, b in frames)  # always the same sickly yellow
+    full = sum(effects_mod.BACKROOMS)
+    levels = sorted(sum(f) / full for f in frames)
+    assert levels[len(levels) // 2] > 0.95  # mostly on, with a faint buzz
+    assert levels[0] < 0.1  # the tube does die now and then
+    dim = sum(1 for lv in levels if lv < 0.8)
+    assert 0 < dim < len(frames) * 0.15  # stutters stay occasional
+
+
 def test_cyberpunk_without_glitches_never_jumps(monkeypatch):
     import random
 
@@ -224,7 +238,7 @@ def test_thunderstorm_is_dim_with_rare_bright_flashes(monkeypatch):
 
 
 def test_new_effects_selectable_and_resume(strip, tmp_path):
-    for name in ("aurora", "thunderstorm"):
+    for name in ("aurora", "thunderstorm", "backrooms"):
         strip.set_effect(name)
         other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
         other.restore()

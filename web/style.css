@@ -185,6 +185,7 @@ button.primary:active { transform: scale(0.98); }
 .cyberpunk-icon { background: linear-gradient(135deg, #ff00aa, #8c28ff 50%, #00e6ff); }
 .aurora-icon { background: linear-gradient(160deg, #1eff6e, #00dcbe 40%, #2878ff 70%, #963cff); }
 .thunderstorm-icon { background: radial-gradient(circle at 60% 35%, #e6ecff, #3a4a8a 35%, #121a38); }
+.backrooms-icon { background: linear-gradient(90deg, #b8b860, #f0f0a8 50%, #b8b860); border-radius: 10px; height: 26px; margin: 9px 0; }
 .effect-group { display: flex; flex-direction: column; gap: 8px; }
 .effect-controls { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
 .effect-controls[hidden] { display: none; }

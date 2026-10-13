@@ -42,7 +42,7 @@ def main():
     fade.add_argument("--period", type=float, default=4)
     sub.add_parser("rainbow").add_argument("--period", type=float, default=20)
     effect = sub.add_parser("effect")
-    effect.add_argument("name", help="candle, strobe, pigs, cyberpunk, aurora or thunderstorm")
+    effect.add_argument("name", help="candle, aurora, thunderstorm, cyberpunk, backrooms, strobe or pigs")
     effect.add_argument("--rate", type=float, help="strobe flashes per second (1-10)")
     effect.add_argument("--norway", action="store_true", help="pigs with blue lights only")
     effect.add_argument("--no-glitch", action="store_true", help="cyberpunk without the random glitches")

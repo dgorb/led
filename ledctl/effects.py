@@ -13,6 +13,10 @@ from .colors import BLACK, hsv_to_rgb, lerp
 MIN_PERIOD = 0.5
 MAX_PERIOD = 600
 
+MIN_BPM = 60
+MAX_BPM = 240
+DEFAULT_BPM = 165
+
 MIN_STROBE_HZ = 1
 MAX_STROBE_HZ = 10
 DEFAULT_STROBE_HZ = 4
@@ -22,6 +26,15 @@ NEON = ((255.0, 0.0, 170.0), (0.0, 230.0, 255.0), (140.0, 40.0, 255.0))
 AURORA = ((30.0, 255.0, 110.0), (0.0, 220.0, 190.0), (40.0, 120.0, 255.0), (150.0, 60.0, 255.0))
 
 BACKROOMS = (235.0, 235.0, 150.0)
+
+CANDY = (
+    (255.0, 110.0, 0.0),    # orange
+    (0.0, 170.0, 255.0),    # sky blue
+    (255.0, 40.0, 150.0),   # hot pink
+    (120.0, 255.0, 60.0),   # lime
+    (255.0, 220.0, 0.0),    # yellow
+    (170.0, 60.0, 255.0),   # violet
+)
 
 STORM_BASE = (25.0, 35.0, 75.0)
 STORM_FLASH = (215.0, 225.0, 255.0)
@@ -194,6 +207,32 @@ def backrooms_loop(rng=None):
         yield tuple(c * level * buzz for c in BACKROOMS)
 
 
+def caramelldansen_loop(bpm=DEFAULT_BPM):
+    """Candy colors on the beat, with a bounce on every beat and an accent on the bar.
+
+    Nothing here listens to the music: it just keeps time at `bpm` from the moment
+    it starts, so start it when the song does and adjust the tempo to taste.
+    """
+    beat_len = 60.0 / bpm
+    start = time.monotonic()
+    while True:
+        beats = (time.monotonic() - start) / beat_len
+        n = int(beats)
+        peak = 1.0 if n % 4 == 0 else 0.85
+        level = peak * (0.6 + 0.4 * math.exp(-4 * (beats - n)))
+        yield tuple(c * level for c in CANDY[n % len(CANDY)])
+
+
+def parse_bpm(value):
+    try:
+        bpm = float(value)
+    except (TypeError, ValueError):
+        raise ValueError("bpm must be a number")
+    if not MIN_BPM <= bpm <= MAX_BPM:
+        raise ValueError(f"bpm must be between {MIN_BPM} and {MAX_BPM}")
+    return bpm
+
+
 def pigs_loop(norway=False):
     """Double red flash, then double blue flash, repeating.
 
@@ -251,27 +290,40 @@ EFFECTS = {
     "thunderstorm": lambda mode: thunderstorm_loop(),
     "cyberpunk": lambda mode: cyberpunk_loop(glitch=mode.get("glitch", True)),
     "backrooms": lambda mode: backrooms_loop(),
+    "caramelldansen": lambda mode: caramelldansen_loop(mode["bpm"]),
     "strobe": lambda mode: strobe_loop(mode["rate"]),
     "pigs": lambda mode: pigs_loop(norway=mode.get("norway", False)),
 }
 
 # Effects that flash hard enough that they should never resume on their own after a restart.
-FLASHING = ("strobe", "pigs")
+FLASHING = ("caramelldansen", "strobe", "pigs")
 
 
-def build_effect_mode(name, rate=None, glitch=None, norway=None):
-    """Validate a request for a named effect and return the mode dict to store."""
+def _flag(options, key):
+    value = options.get(key)
+    if value is not None and not isinstance(value, bool):
+        raise ValueError(f"{key} must be true or false")
+    return value
+
+
+def build_effect_mode(name, options=None):
+    """Validate a request for a named effect and return the mode dict to store.
+
+    `options` holds whatever the client sent; each effect reads only its own settings.
+    """
+    options = options or {}
     if name not in EFFECTS:
         raise ValueError(f"unknown effect {name!r}, expected one of: {', '.join(EFFECTS)}")
     mode = {"type": "effect", "name": name}
     if name == "strobe":
+        rate = options.get("rate")
         mode["rate"] = parse_strobe_rate(DEFAULT_STROBE_HZ if rate is None else rate)
-    if name == "cyberpunk":
-        if glitch is not None and not isinstance(glitch, bool):
-            raise ValueError("glitch must be true or false")
+    elif name == "cyberpunk":
+        glitch = _flag(options, "glitch")
         mode["glitch"] = True if glitch is None else glitch
-    if name == "pigs":
-        if norway is not None and not isinstance(norway, bool):
-            raise ValueError("norway must be true or false")
-        mode["norway"] = bool(norway)
+    elif name == "pigs":
+        mode["norway"] = bool(_flag(options, "norway"))
+    elif name == "caramelldansen":
+        bpm = options.get("bpm")
+        mode["bpm"] = parse_bpm(DEFAULT_BPM if bpm is None else bpm)
     return mode

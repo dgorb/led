@@ -224,6 +224,7 @@
       const body = { name };
       if (name === "strobe") body.rate = Number($("strobe-rate").value);
       if (name === "cyberpunk") body.glitch = $("cyberpunk-glitch").checked;
+      if (name === "caramelldansen") body.bpm = Number($("caramell-bpm").value);
       if (name === "pigs") body.norway = $("pigs-norway").getAttribute("aria-pressed") === "true";
       const state = await api("POST", "/effect", body);
       if (state) { on = state.on; renderPower(); markEffect(state.mode); }
@@ -240,6 +241,15 @@
     }
   });
   showStrobeRate();
+
+  const bpmInput = $("caramell-bpm");
+  const showBpm = () => ($("caramell-bpm-val").textContent = bpmInput.value + " BPM");
+  bpmInput.addEventListener("input", showBpm);
+  bpmInput.addEventListener("change", () => {
+    const card = document.querySelector('.effect[data-effect="caramelldansen"]');
+    if (card.classList.contains("active")) card.click();
+  });
+  showBpm();
 
   $("pigs-norway").addEventListener("click", (e) => {
     const btn = e.currentTarget;
@@ -262,6 +272,7 @@
     // Show each effect's extra controls only while that effect is running.
     $("strobe-controls").hidden = !(mode.type === "effect" && mode.name === "strobe");
     $("cyberpunk-controls").hidden = !(mode.type === "effect" && mode.name === "cyberpunk");
+    $("caramelldansen-controls").hidden = !(mode.type === "effect" && mode.name === "caramelldansen");
     $("pigs-controls").hidden = !(mode.type === "effect" && mode.name === "pigs");
   };
 
@@ -367,6 +378,9 @@
           showStrobeRate();
         } else if (mode.type === "effect" && mode.name === "cyberpunk") {
           $("cyberpunk-glitch").checked = mode.glitch !== false;
+        } else if (mode.type === "effect" && mode.name === "caramelldansen") {
+          bpmInput.value = mode.bpm;
+          showBpm();
         } else if (mode.type === "effect" && mode.name === "pigs") {
           $("pigs-norway").setAttribute("aria-pressed", String(Boolean(mode.norway)));
         } else if (mode.type === "rainbow") {

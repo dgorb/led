@@ -186,6 +186,7 @@ button.primary:active { transform: scale(0.98); }
 .aurora-icon { background: linear-gradient(160deg, #1eff6e, #00dcbe 40%, #2878ff 70%, #963cff); }
 .thunderstorm-icon { background: radial-gradient(circle at 60% 35%, #e6ecff, #3a4a8a 35%, #121a38); }
 .backrooms-icon { background: linear-gradient(90deg, #b8b860, #f0f0a8 50%, #b8b860); border-radius: 10px; height: 26px; margin: 9px 0; }
+.caramell-icon { background: conic-gradient(#ff6e00, #00aaff, #ff2896, #78ff3c, #ffdc00, #aa3cff, #ff6e00); }
 .effect-group { display: flex; flex-direction: column; gap: 8px; }
 .effect-controls { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
 .effect-controls[hidden] { display: none; }

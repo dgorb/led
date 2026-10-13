@@ -56,7 +56,7 @@ def create_app(strip, favorites):
 
     @app.post("/api/effect")
     def set_effect():
-        strip.set_effect(field(data := body(), "name"), data.get("rate"), data.get("glitch"), data.get("norway"))
+        strip.set_effect(field(data := body(), "name"), data)
         return jsonify(strip.state())
 
     @app.post("/api/rainbow")

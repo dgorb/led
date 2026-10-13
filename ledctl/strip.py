@@ -87,8 +87,8 @@ class LEDStrip:
         }
         self._set_mode(mode)
 
-    def set_effect(self, name, rate=None, glitch=None, norway=None):
-        self._set_mode(build_effect_mode(name, rate, glitch, norway))
+    def set_effect(self, name, options=None):
+        self._set_mode(build_effect_mode(name, options))
 
     def set_rainbow(self, period):
         self._set_mode({"type": "rainbow", "period": parse_period(period)})

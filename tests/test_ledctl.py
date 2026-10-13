@@ -88,7 +88,7 @@ def test_effect_api_validation(client):
 
 
 def test_strobe_flashes_and_is_not_restored(strip, tmp_path):
-    strip.set_effect("strobe", 10)
+    strip.set_effect("strobe", {"rate": 10})
     seen = set()
     for _ in range(40):
         time.sleep(0.02)
@@ -166,6 +166,30 @@ def test_backrooms_is_a_buzzing_yellow_green_with_stutters(monkeypatch):
     assert levels[0] < 0.1  # the tube does die now and then
     dim = sum(1 for lv in levels if lv < 0.8)
     assert 0 < dim < len(frames) * 0.15  # stutters stay occasional
+
+
+def test_caramelldansen_changes_color_and_bounces_on_the_beat(monkeypatch):
+    frames = _simulate(monkeypatch, lambda: effects_mod.caramelldansen_loop(120), 10)  # 0.5 s per beat = 30 frames
+    assert len(set(frames)) > 30
+    hues = {tuple(round(c / m, 2) for c in f) for f in frames for m in [max(f)]}  # colors regardless of brightness
+    assert len(hues) == len(effects_mod.CANDY)
+    for beat in range(1, 15):
+        start = max(frames[beat * 30 + 2])
+        end = max(frames[beat * 30 + 26])
+        assert start > end * 1.3  # hit, then settle before the next beat
+    assert min(max(f) for f in frames) > 100  # it bounces, it does not black out
+
+
+def test_caramelldansen_tempo_option_and_not_resumed(client, strip, tmp_path):
+    mode = client.post("/api/effect", json={"name": "caramelldansen"}).get_json()["mode"]
+    assert mode == {"type": "effect", "name": "caramelldansen", "bpm": 165}
+    assert client.post("/api/effect", json={"name": "caramelldansen", "bpm": 140}).get_json()["mode"]["bpm"] == 140
+    for bad in (10, 1000, "fast"):
+        assert client.post("/api/effect", json={"name": "caramelldansen", "bpm": bad}).status_code == 400
+    other = LEDStrip(MockDriver((1, 2, 3)), state_file=strip._state_file)
+    other.restore()
+    assert other.state()["mode"]["type"] == "static"  # a party effect should not restart by itself at 3am
+    other.close()
 
 
 def test_cyberpunk_without_glitches_never_jumps(monkeypatch):

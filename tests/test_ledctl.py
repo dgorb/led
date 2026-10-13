@@ -315,27 +315,95 @@ def test_pwm_uses_the_real_resolution(fake_pigpio):
     assert fake_pigpio.range == {17: 1000, 22: 1000, 24: 1000}
 
 
-def test_dithering_makes_dark_levels_smooth(fake_pigpio):
+def _manual_driver(pins=(17,), **kw):
     from ledctl.hardware import PigpioDriver
 
-    driver = PigpioDriver((17,), pwm_freq=200)
-    fake_pigpio.duty.clear()
-    for _ in range(1000):
-        driver.write([0.0017])  # 1.7 steps: dark storm red after gamma
-    duties = [d for _, d in fake_pigpio.duty]
+    return PigpioDriver(pins, pwm_freq=200, threaded=False, **kw)
+
+
+def test_dithering_makes_dark_levels_smooth(fake_pigpio):
+    driver = _manual_driver()
+    driver.write([0.0017])  # 1.7 steps: dark storm red after gamma
+    duties = [driver._tick()[0] for _ in range(1000)]
     assert set(duties) == {1, 2}
     assert sum(duties) / len(duties) == pytest.approx(1.7, abs=0.01)
 
 
 def test_dithering_never_leaves_range(fake_pigpio):
+    driver = _manual_driver()
+    seen = []
+    for level in (0.0, 1.0, 0.0004, 0.9996, 1.0, -0.5, 3.0):
+        driver.write([level])
+        seen += [driver._tick()[0] for _ in range(20)]
+    assert all(0 <= d <= 1000 for d in seen)
+    assert all(0 <= d <= 1000 for _, d in fake_pigpio.duty)
+
+
+def test_driver_only_talks_to_pigpio_when_the_duty_changes(fake_pigpio):
+    driver = _manual_driver()
+    driver.write([0.5])
+    for _ in range(50):
+        driver._tick()
+    assert fake_pigpio.duty == [(17, 500)]
+    driver.write([0.25])
+    driver._tick()
+    assert fake_pigpio.duty[-1] == (17, 250)
+
+
+def test_dither_thread_runs_and_close_zeroes_the_outputs(fake_pigpio):
+    from ledctl.hardware import PigpioDriver
+
+    driver = PigpioDriver((17, 22), pwm_freq=200)
+    driver.write([1.0, 0.5])
+    time.sleep(0.1)
+    assert (17, 1000) in fake_pigpio.duty and (22, 500) in fake_pigpio.duty
+    driver.close()
+    assert fake_pigpio.duty[-2:] == [(17, 0), (22, 0)]
+    assert not driver._thread.is_alive()
+    calls = len(fake_pigpio.duty)
+    time.sleep(0.05)
+    assert len(fake_pigpio.duty) == calls  # nothing writes after close
+
+
+def test_dither_thread_survives_pigpiod_errors(fake_pigpio):
     from ledctl.hardware import PigpioDriver
 
     driver = PigpioDriver((17,), pwm_freq=200)
-    fake_pigpio.duty.clear()
-    for level in (0.0, 1.0, 0.0004, 0.9996, 1.0):
-        for _ in range(20):
-            driver.write([level])
-    assert all(0 <= d <= 1000 for _, d in fake_pigpio.duty)
+    original = fake_pigpio.set_PWM_dutycycle
+    fake_pigpio.set_PWM_dutycycle = lambda *a: (_ for _ in ()).throw(ConnectionError("gone"))
+    driver.write([0.3])
+    time.sleep(0.05)
+    assert driver._thread.is_alive()
+    fake_pigpio.set_PWM_dutycycle = original
+    driver.write([0.6])
+    time.sleep(0.1)
+    assert (17, 600) in fake_pigpio.duty
+    driver.close()
+
+
+def test_blend_in_starts_from_the_old_color_and_ends_on_the_effect(monkeypatch):
+    frames = _simulate(
+        monkeypatch,
+        lambda: effects_mod.blend_in(iter(lambda: (200.0, 100.0, 0.0), None), (0.0, 0.0, 0.0), 1.0),
+        3,
+    )
+    assert max(frames[0]) < 10  # no jump on the first frame
+    reds = [r for r, _, _ in frames]
+    assert all(a <= b for a, b in zip(reds, reds[1:]))  # rises smoothly
+    assert max(b - a for a, b in zip(reds, reds[1:])) < 10
+    assert frames[-1] == (200.0, 100.0, 0.0)  # then plays the effect unchanged
+
+
+def test_switching_effects_does_not_jump_but_flashing_ones_cut_hard(strip):
+    strip.set_color("#ff0000")
+    strip.set_effect("candle")
+    assert strip._current[0] > 200 and strip._current[1] < 60  # still close to the red it came from
+    strip.set_effect("strobe", {"rate": 10})
+    seen = set()
+    for _ in range(40):
+        time.sleep(0.02)
+        seen.add(strip._current)
+    assert (255.0, 255.0, 255.0) in seen  # strobe goes straight to white
 
 
 def test_strobe_rate_is_limited(client):

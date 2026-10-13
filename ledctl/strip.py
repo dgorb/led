@@ -7,6 +7,7 @@ from .colors import BLACK, normalize_hex, parse_hex, to_hex
 from .effects import (
     EFFECTS,
     FLASHING,
+    blend_in,
     build_effect_mode,
     fade_loop,
     parse_period,
@@ -18,6 +19,7 @@ log = logging.getLogger(__name__)
 
 FRAME_TIME = 1 / 60
 FADE_TIME = 1.2
+EFFECT_BLEND_TIME = 0.6
 DEFAULT_MODE = {"type": "static", "color": "#ff9329"}
 
 
@@ -120,7 +122,10 @@ class LEDStrip:
             a, b = (parse_hex(c) for c in mode["colors"])
             self._run(self._chain(transition(self._current, a, 0.5), fade_loop(a, b, mode["period"])))
         elif mode["type"] == "effect":
-            self._run(EFFECTS[mode["name"]](mode))
+            frames = EFFECTS[mode["name"]](mode)
+            if mode["name"] not in FLASHING:  # flashing effects need hard cuts
+                frames = blend_in(frames, self._current, EFFECT_BLEND_TIME)
+            self._run(frames)
         elif mode["type"] == "rainbow":
             self._run(rainbow_loop(mode["period"]))
 

@@ -50,6 +50,18 @@ def transition(a, b, duration):
         yield lerp(a, b, k)
 
 
+def blend_in(frames, start, duration):
+    """Fade from `start` into an effect so switching to it never makes a visible jump."""
+    began = time.monotonic()
+    for rgb in frames:
+        k = (time.monotonic() - began) / duration
+        if k >= 1:
+            yield rgb
+            break
+        yield lerp(start, rgb, k)
+    yield from frames
+
+
 def fade_loop(a, b, period):
     """Ease back and forth between a and b; `period` is seconds for one way."""
     start = time.monotonic()

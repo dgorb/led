@@ -74,11 +74,12 @@ def strobe_loop(rate, duty=0.2):
         yield white if phase < duty else BLACK
 
 
-def cyberpunk_loop(rng=None):
+def cyberpunk_loop(rng=None, glitch=True):
     """Neon base that drifts between magenta, cyan and purple, with random glitches.
 
     A glitch is a burst of a few very short frames: a different neon color,
-    darkness, or a white flash, then back to the base color.
+    darkness, or a white flash, then back to the base color. With glitch=False
+    only the slow color drift remains.
     """
     rng = rng or random.Random()
     now = time.monotonic()
@@ -96,7 +97,7 @@ def cyberpunk_loop(rng=None):
 
         while segments and now >= segments[0][0]:
             segments.pop(0)
-        if not segments and now >= next_glitch:
+        if glitch and not segments and now >= next_glitch:
             t = now
             for _ in range(rng.randint(2, 6)):
                 t += rng.uniform(0.02, 0.09)
@@ -203,7 +204,7 @@ EFFECTS = {
     "candle": lambda mode: candle_loop(),
     "aurora": lambda mode: aurora_loop(),
     "thunderstorm": lambda mode: thunderstorm_loop(),
-    "cyberpunk": lambda mode: cyberpunk_loop(),
+    "cyberpunk": lambda mode: cyberpunk_loop(glitch=mode.get("glitch", True)),
     "strobe": lambda mode: strobe_loop(mode["rate"]),
     "pigs": lambda mode: pigs_loop(),
 }
@@ -212,11 +213,15 @@ EFFECTS = {
 FLASHING = ("strobe", "pigs")
 
 
-def build_effect_mode(name, rate=None):
+def build_effect_mode(name, rate=None, glitch=None):
     """Validate a request for a named effect and return the mode dict to store."""
     if name not in EFFECTS:
         raise ValueError(f"unknown effect {name!r}, expected one of: {', '.join(EFFECTS)}")
     mode = {"type": "effect", "name": name}
     if name == "strobe":
         mode["rate"] = parse_strobe_rate(DEFAULT_STROBE_HZ if rate is None else rate)
+    if name == "cyberpunk":
+        if glitch is not None and not isinstance(glitch, bool):
+            raise ValueError("glitch must be true or false")
+        mode["glitch"] = True if glitch is None else glitch
     return mode

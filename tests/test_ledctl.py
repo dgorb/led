@@ -137,11 +137,33 @@ def test_cyberpunk_glitches_around_a_neon_base(strip, monkeypatch):
     assert calm > len(jumps) * 0.7  # but most of the time it is steady
 
 
+def test_cyberpunk_without_glitches_never_jumps(monkeypatch):
+    import random
+
+    frames = _simulate(monkeypatch, lambda: effects_mod.cyberpunk_loop(random.Random(1), glitch=False), 120)
+    jumps = [max(abs(a - b) for a, b in zip(f1, f2)) for f1, f2 in zip(frames, frames[1:])]
+    assert max(jumps) < 5
+    assert len({tuple(round(c / 20) for c in f) for f in frames}) > 5  # but the color still drifts
+
+
+def test_cyberpunk_glitch_option_through_the_api(client, strip):
+    mode = client.post("/api/effect", json={"name": "cyberpunk", "glitch": False}).get_json()["mode"]
+    assert mode == {"type": "effect", "name": "cyberpunk", "glitch": False}
+    assert client.post("/api/effect", json={"name": "cyberpunk"}).get_json()["mode"]["glitch"] is True
+    assert client.post("/api/effect", json={"name": "cyberpunk", "glitch": "no"}).status_code == 400
+    # persisted: a restart keeps the choice
+    client.post("/api/effect", json={"name": "cyberpunk", "glitch": False})
+    other = LEDStrip(MockDriver((1, 2, 3)), state_file=strip._state_file)
+    other.restore()
+    assert other.state()["mode"]["glitch"] is False
+    other.close()
+
+
 def test_cyberpunk_is_selectable_and_resumes(strip, tmp_path):
     strip.set_effect("cyberpunk")
     other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
     other.restore()
-    assert other.state()["mode"] == {"type": "effect", "name": "cyberpunk"}
+    assert other.state()["mode"] == {"type": "effect", "name": "cyberpunk", "glitch": True}
     other.close()
 
 

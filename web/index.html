@@ -81,10 +81,19 @@
         <span class="effect-icon thunderstorm-icon" aria-hidden="true"></span>
         <span class="effect-text"><strong>Thunderstorm</strong><small>Dark clouds, distant lightning</small></span>
       </button>
-      <button class="effect" data-effect="cyberpunk">
-        <span class="effect-icon cyberpunk-icon" aria-hidden="true"></span>
-        <span class="effect-text"><strong>Cyberpunk</strong><small>Neon with random glitches</small></span>
-      </button>
+      <div class="effect-group">
+        <button class="effect" data-effect="cyberpunk">
+          <span class="effect-icon cyberpunk-icon" aria-hidden="true"></span>
+          <span class="effect-text"><strong>Cyberpunk</strong><small>Neon with random glitches</small></span>
+        </button>
+        <div class="effect-controls" id="cyberpunk-controls" hidden>
+          <label class="switch">
+            <span>Glitches</span>
+            <input type="checkbox" id="cyberpunk-glitch" checked>
+            <i aria-hidden="true"></i>
+          </label>
+        </div>
+      </div>
       <div class="effect-group">
         <button class="effect" data-effect="strobe">
           <span class="effect-icon strobe-icon" aria-hidden="true"></span>

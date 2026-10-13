@@ -223,6 +223,7 @@
       const name = btn.dataset.effect;
       const body = { name };
       if (name === "strobe") body.rate = Number($("strobe-rate").value);
+      if (name === "cyberpunk") body.glitch = $("cyberpunk-glitch").checked;
       const state = await api("POST", "/effect", body);
       if (state) { on = state.on; renderPower(); markEffect(state.mode); }
     })
@@ -239,12 +240,19 @@
   });
   showStrobeRate();
 
+  $("cyberpunk-glitch").addEventListener("change", () => {
+    // Apply right away if cyberpunk is already running.
+    const card = document.querySelector('.effect[data-effect="cyberpunk"]');
+    if (card.classList.contains("active")) card.click();
+  });
+
   const markEffect = (mode) => {
     document.querySelectorAll(".effect").forEach((b) =>
       b.classList.toggle("active", mode.type === "effect" && mode.name === b.dataset.effect)
     );
     // Show each effect's extra controls only while that effect is running.
     $("strobe-controls").hidden = !(mode.type === "effect" && mode.name === "strobe");
+    $("cyberpunk-controls").hidden = !(mode.type === "effect" && mode.name === "cyberpunk");
   };
 
   // ---- power ---------------------------------------------------------
@@ -347,6 +355,8 @@
         } else if (mode.type === "effect" && mode.rate) {
           strobeRate.value = mode.rate;
           showStrobeRate();
+        } else if (mode.type === "effect" && mode.name === "cyberpunk") {
+          $("cyberpunk-glitch").checked = mode.glitch !== false;
         } else if (mode.type === "rainbow") {
           $("rainbow-period").value = mode.period;
           $("rainbow-period").dispatchEvent(new Event("input"));

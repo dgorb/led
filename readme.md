@@ -67,7 +67,7 @@ The UI is plain HTML/CSS/JS in `web/`, so there is no build step.
 | Variable       | Default      | Description                              |
 | -------------- | ------------ | ---------------------------------------- |
 | `LED_PINS`     | `17,22,24`   | GPIO pins for R, G, B                    |
-| `LED_GAMMA`    | `2.8`        | Gamma correction                         |
+| `LED_GAMMA`    | `2.2`        | Gamma correction (2.2 matches sRGB screens; higher = darker mid-tones) |
 | `LED_PWM_FREQ` | `200`        | PWM frequency in Hz. Lower = smoother dark fades (200 Hz = 1000 steps, 400 Hz = 500), higher = less flicker on camera |
 | `LED_PORT`     | `5000`       | HTTP port                                |
 | `LED_HOST`     | `0.0.0.0`    | Bind address                             |

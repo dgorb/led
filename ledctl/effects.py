@@ -198,14 +198,14 @@ def parse_period(value):
     return period
 
 
-# Named effects selectable from the UI/API. Each takes the saved mode dict.
+# Named effects selectable from the UI/API, calmest first. Each takes the saved mode dict.
 EFFECTS = {
     "candle": lambda mode: candle_loop(),
-    "strobe": lambda mode: strobe_loop(mode["rate"]),
-    "pigs": lambda mode: pigs_loop(),
-    "cyberpunk": lambda mode: cyberpunk_loop(),
     "aurora": lambda mode: aurora_loop(),
     "thunderstorm": lambda mode: thunderstorm_loop(),
+    "cyberpunk": lambda mode: cyberpunk_loop(),
+    "strobe": lambda mode: strobe_loop(mode["rate"]),
+    "pigs": lambda mode: pigs_loop(),
 }
 
 # Effects that flash hard enough that they should never resume on their own after a restart.

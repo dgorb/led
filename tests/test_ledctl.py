@@ -114,6 +114,36 @@ def test_pigs_alternates_red_and_blue_and_is_not_restored(strip, tmp_path):
     other.close()
 
 
+def test_cyberpunk_glitches_around_a_neon_base(strip, monkeypatch):
+    import random
+    from types import SimpleNamespace
+
+    clock = [0.0]
+
+    def fake_monotonic():
+        clock[0] += 1 / 60
+        return clock[0]
+
+    monkeypatch.setattr(strip_mod, "time", SimpleNamespace(monotonic=fake_monotonic, sleep=time.sleep))
+    frames = []
+    gen = strip_mod.cyberpunk_loop(random.Random(1))
+    for _ in range(60 * 30):  # 30 simulated seconds
+        frames.append(next(gen))
+    assert all(0 <= c <= 255 for rgb in frames for c in rgb)
+    jumps = [max(abs(a - b) for a, b in zip(f1, f2)) for f1, f2 in zip(frames, frames[1:])]
+    assert max(jumps) > 100  # glitches are abrupt
+    calm = sum(1 for j in jumps if j < 5)
+    assert calm > len(jumps) * 0.7  # but most of the time it is steady
+
+
+def test_cyberpunk_is_selectable_and_resumes(strip, tmp_path):
+    strip.set_effect("cyberpunk")
+    other = LEDStrip(MockDriver((1, 2, 3)), state_file=tmp_path / "state.json")
+    other.restore()
+    assert other.state()["mode"] == {"type": "effect", "name": "cyberpunk"}
+    other.close()
+
+
 def test_strobe_rate_is_limited(client):
     assert client.post("/api/effect", json={"name": "strobe", "rate": 30}).status_code == 400
     assert client.post("/api/effect", json={"name": "strobe", "rate": "x"}).status_code == 400

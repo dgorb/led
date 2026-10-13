@@ -62,6 +62,7 @@ EFFECTS = {
     "candle": lambda mode: candle_loop(),
     "strobe": lambda mode: strobe_loop(mode["rate"]),
     "pigs": lambda mode: pigs_loop(),
+    "cyberpunk": lambda mode: cyberpunk_loop(),
 }
 
 # Effects that flash hard enough that they should never resume on their own after a restart.
@@ -79,6 +80,42 @@ def strobe_loop(rate, duty=0.2):
     while True:
         phase = ((time.monotonic() - start) * rate) % 1
         yield white if phase < duty else BLACK
+
+
+NEON = ((255.0, 0.0, 170.0), (0.0, 230.0, 255.0), (140.0, 40.0, 255.0))
+
+
+def cyberpunk_loop(rng=None):
+    """Neon base that drifts between magenta, cyan and purple, with random glitches.
+
+    A glitch is a burst of a few very short frames: a different neon color,
+    darkness, or a white flash, then back to the base color.
+    """
+    rng = rng or random.Random()
+    now = time.monotonic()
+    src, dst = rng.sample(NEON, 2)
+    fade_start, fade_len = now, rng.uniform(4, 9)
+    next_glitch = now + rng.uniform(0.5, 2.5)
+    segments = []  # (until, color) for the glitch burst in progress
+    while True:
+        now = time.monotonic()
+        if now >= fade_start + fade_len:
+            src, dst = dst, rng.choice([c for c in NEON if c != dst])
+            fade_start, fade_len = now, rng.uniform(4, 9)
+        k = min(1.0, (now - fade_start) / fade_len)
+        base = lerp(src, dst, k * k * (3 - 2 * k))
+
+        while segments and now >= segments[0][0]:
+            segments.pop(0)
+        if not segments and now >= next_glitch:
+            t = now
+            for _ in range(rng.randint(2, 6)):
+                t += rng.uniform(0.02, 0.09)
+                segments.append((t, rng.choice((BLACK, (255.0, 255.0, 255.0), rng.choice(NEON)))))
+                t += rng.uniform(0.02, 0.06)
+                segments.append((t, base))
+            next_glitch = t + rng.uniform(0.6, 3.0)
+        yield segments[0][1] if segments else base
 
 
 def pigs_loop():
